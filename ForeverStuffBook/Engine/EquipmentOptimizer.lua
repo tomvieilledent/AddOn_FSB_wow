@@ -30,14 +30,17 @@ local function DeltaForSlot(equipLoc, slot, newScore, equipped, weights, canDual
     return newScore - SlotScore(equipped, slot, weights)
 end
 
+-- adjust(slot) -> nombre (optionnel) : bonus/malus supplémentaire si l'objet prend cet emplacement
+-- (utilisé pour les bonus de set).
 -- Retourne (meilleurGain, meilleurEmplacement, scoreRemplacé). Gain nil = aucune configuration possible.
-function Optimizer.Evaluate(equipLoc, newStats, equipped, weights, canDualWield)
+function Optimizer.Evaluate(equipLoc, newStats, equipped, weights, canDualWield, adjust)
     local slots = FSB.Stats.SLOTS_FOR[equipLoc]
     if not slots then return nil end
     local newScore = Score(newStats, weights)
     local bestDelta, bestSlot
     for _, slot in ipairs(slots) do
         local delta = DeltaForSlot(equipLoc, slot, newScore, equipped, weights, canDualWield)
+        if delta and adjust then delta = delta + adjust(slot) end
         if delta and (not bestDelta or delta > bestDelta) then bestDelta, bestSlot = delta, slot end
     end
     if not bestDelta then return nil end

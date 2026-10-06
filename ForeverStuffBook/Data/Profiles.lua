@@ -11,10 +11,10 @@ local DEFAULTS = {
         ITEM_MOD_HEALING_POWER_SHORT = 100, ITEM_MOD_SPELL_POWER_SHORT = 80, ITEM_MOD_INTELLECT_SHORT = 75,
         ITEM_MOD_MANA_REGENERATION_SHORT = 90, ITEM_MOD_SPIRIT_SHORT = 65, ITEM_MOD_CRIT_RATING_SHORT = 50,
         ITEM_MOD_HASTE_RATING_SHORT = 55, ITEM_MOD_STAMINA_SHORT = 20 } },
-    { name = "Dégâts magiques", role = "DAMAGER", weights = {
+    { name = "Dégâts magiques", role = "DAMAGER", damage = "MAGIC", weights = {
         ITEM_MOD_SPELL_POWER_SHORT = 100, ITEM_MOD_INTELLECT_SHORT = 70, ITEM_MOD_HIT_RATING_SHORT = 85,
         ITEM_MOD_CRIT_RATING_SHORT = 60, ITEM_MOD_HASTE_RATING_SHORT = 60, ITEM_MOD_STAMINA_SHORT = 15 } },
-    { name = "Dégâts physiques", role = "DAMAGER", weights = {
+    { name = "Dégâts physiques", role = "DAMAGER", damage = "PHYSICAL", weights = {
         ITEM_MOD_ATTACK_POWER_SHORT = 50, ITEM_MOD_STRENGTH_SHORT = 80, ITEM_MOD_AGILITY_SHORT = 80,
         ITEM_MOD_HIT_RATING_SHORT = 85, ITEM_MOD_CRIT_RATING_SHORT = 70, ITEM_MOD_HASTE_RATING_SHORT = 60,
         ITEM_MOD_EXPERTISE_RATING_SHORT = 60, ITEM_MOD_STAMINA_SHORT = 15 } },
@@ -48,9 +48,12 @@ function Profiles.GetActive() return Profiles.Find(FSB.db.activeProfile) end
 
 local function Changed() if FSB.Analyzer then FSB.Analyzer.InvalidateAll() end end
 
-function Profiles.SetActive(name)
+-- auto = true : changement fait par la détection de spé ; sinon (choix de l'utilisateur) on
+-- désactive la sélection automatique.
+function Profiles.SetActive(name, auto)
     if not Profiles.Find(name) then return false end
     FSB.db.activeProfile = name
+    if not auto then FSB.db.autoProfile = false end
     Changed()
     return true
 end
@@ -80,5 +83,11 @@ end
 
 function Profiles.SetWeight(profile, statKey, value)
     profile.weights[statKey] = value
+    Changed()
+end
+
+-- Valeur (en points de score) d'un palier de bonus de set pour ce profil. 0 = non estimé.
+function Profiles.SetBonusValue(profile, value)
+    profile.setBonusValue = value
     Changed()
 end

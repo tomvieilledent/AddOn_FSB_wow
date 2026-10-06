@@ -1,36 +1,70 @@
 local _, FSB = ...
 
--- Verdict solo. Les scores restent internes ; seul le type de verdict sort.
+-- Verdicts. Les scores restent internes ; seuls le type de verdict et des détails sortent.
 local Verdict = {}
 FSB.Verdict = Verdict
 
--- Seuils configurables (FSB.db.thresholds si présent) :
---  upgradeRel : gain minimal relatif au score de l'objet remplacé (0.03 = +3 %)
---  upgradeAbs : gain minimal absolu (évite les "upgrades" négligeables sur emplacement vide)
-Verdict.DEFAULT_THRESHOLDS = { upgradeRel = 0.03, upgradeAbs = 1 }
+-- Seuils configurables (FSB.db.thresholds, surchargeables champ par champ) :
+--  upgradeRel  : gain minimal relatif au score de l'objet remplacé (0.03 = +3 %)
+--  upgradeAbs  : gain minimal absolu (évite les "upgrades" négligeables sur emplacement vide)
+--  otherMargin : en groupe, un autre joueur doit gagner au moins cette part de la valeur de
+--                l'objet de PLUS que moi pour déclencher "MEILLEUR POUR UN AUTRE" (0.25 = 25 points
+--                de pourcentage de la valeur de l'objet). Évite le verdict pour une petite différence.
+Verdict.DEFAULT_THRESHOLDS = { upgradeRel = 0.03, upgradeAbs = 1, otherMargin = 0.25 }
 
-local function Thresholds()
-    return (FSB.db and FSB.db.thresholds) or Verdict.DEFAULT_THRESHOLDS
+local function Threshold(name)
+    local custom = FSB.db and FSB.db.thresholds
+    return (custom and custom[name]) or Verdict.DEFAULT_THRESHOLDS[name]
 end
 
 function Verdict.IsUpgrade(delta, replacedScore)
     if not delta then return false end
-    local t = Thresholds()
-    return delta >= t.upgradeAbs and delta >= t.upgradeRel * math.max(replacedScore or 0, 0)
+    return delta >= Threshold("upgradeAbs") and delta >= Threshold("upgradeRel") * math.max(replacedScore or 0, 0)
 end
 
--- ctx : { equipLoc, stats, equipped, canDualWield, profiles, active }
--- Retourne { kind = "EQUIP" | "OFFSPEC" | "SELL", profile = nom (OFFSPEC) }.
+-- Gain d'un profil pour l'objet. Retourne { upgrade = bool, fraction = gain/valeur de l'objet, slot = n }.
+local function Gain(ctx, equipped, profile, canDualWield, adjust)
+    local delta, slot, replaced = FSB.Optimizer.Evaluate(
+        ctx.equipLoc, ctx.stats, equipped, profile.weights, canDualWield, adjust)
+    local newScore = FSB.ScoreEngine.Score(ctx.stats, profile.weights)
+    return {
+        upgrade = Verdict.IsUpgrade(delta, replaced),
+        fraction = (delta and newScore > 0) and delta / newScore or 0,
+        slot = slot,
+    }
+end
+
+-- ctx : { equipLoc, stats, equipped, canDualWield, profiles, active, adjustFor(profile) -> adjust(slot) }
+-- Retourne { kind = "EQUIP" | "OFFSPEC" | "SELL", profile = nom (OFFSPEC), slot, fraction }.
 function Verdict.Solo(ctx)
-    local Evaluate = FSB.Optimizer.Evaluate
-    local delta, _, replaced = Evaluate(ctx.equipLoc, ctx.stats, ctx.equipped, ctx.active.weights, ctx.canDualWield)
-    if Verdict.IsUpgrade(delta, replaced) then return { kind = "EQUIP" } end
+    local function adjust(profile) return ctx.adjustFor and ctx.adjustFor(profile) or nil end
+    local mine = Gain(ctx, ctx.equipped, ctx.active, ctx.canDualWield, adjust(ctx.active))
+    if mine.upgrade then return { kind = "EQUIP", slot = mine.slot, fraction = mine.fraction } end
 
     for _, profile in ipairs(ctx.profiles) do
         if profile ~= ctx.active then
-            local d, _, r = Evaluate(ctx.equipLoc, ctx.stats, ctx.equipped, profile.weights, ctx.canDualWield)
-            if Verdict.IsUpgrade(d, r) then return { kind = "OFFSPEC", profile = profile.name } end
+            local g = Gain(ctx, ctx.equipped, profile, ctx.canDualWield, adjust(profile))
+            if g.upgrade then return { kind = "OFFSPEC", profile = profile.name } end
         end
     end
     return { kind = "SELL" }
+end
+
+-- Mode groupe : mêmes règles personnelles, plus la comparaison avec les membres connus.
+-- ctx.members : { { name, weights, equipped } } (uniquement des données certaines).
+-- Retourne { kind = "TAKE" | "BETTER_OTHER" | "OFFSPEC" | "CUPI", profile, others = {noms} }.
+function Verdict.Group(ctx)
+    local solo = Verdict.Solo(ctx)
+    if solo.kind == "OFFSPEC" then return solo end
+    if solo.kind == "SELL" then return { kind = "CUPI" } end
+
+    local better = {}
+    for _, m in ipairs(ctx.members or {}) do
+        local g = Gain(ctx, m.equipped, { weights = m.weights }, false, nil)
+        if g.upgrade and g.fraction >= solo.fraction + Threshold("otherMargin") then
+            better[#better + 1] = m.name
+        end
+    end
+    if #better > 0 then return { kind = "BETTER_OTHER", others = better, slot = solo.slot } end
+    return { kind = "TAKE", slot = solo.slot }
 end
