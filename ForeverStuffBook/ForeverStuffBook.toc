@@ -1,0 +1,18 @@
+## Interface: 16001
+## Title: Forever Stuff Book
+## Notes: Assistant passif de décision équipement/loot (FSB). Aucune action automatique.
+## Author: tomvieilledent
+## Version: 0.2.0
+## SavedVariables: ForeverStuffBookDB
+
+Localization\frFR.lua
+Utils\Utils.lua
+Data\Stats.lua
+Data\Profiles.lua
+Core\Compat.lua
+Engine\ScoreEngine.lua
+Engine\EquipmentOptimizer.lua
+Engine\VerdictEngine.lua
+Engine\ItemAnalyzer.lua
+Core\Core.lua
+Tooltip\Tooltip.lua
