@@ -8,11 +8,15 @@ FSB.Profiles = Profiles
 
 local DEFAULTS = {
     { name = "Soigneur", role = "HEALER", weights = {
-        ITEM_MOD_SPELL_HEALING_DONE_SHORT = 100, ITEM_MOD_SPELL_DAMAGE_DONE_SHORT = 80, ITEM_MOD_INTELLECT_SHORT = 75,
+        ITEM_MOD_SPELL_HEALING_DONE_SHORT = 100, ITEM_MOD_SPELL_DAMAGE_DONE_SHORT = 10, ITEM_MOD_HOLY_DAMAGE_DONE_SHORT = 10,
+        ITEM_MOD_INTELLECT_SHORT = 75,
         ITEM_MOD_MANA_REGENERATION_SHORT = 90, ITEM_MOD_SPIRIT_SHORT = 65, ITEM_MOD_CRIT_RATING_SHORT = 50,
         ITEM_MOD_HASTE_RATING_SHORT = 55, ITEM_MOD_STAMINA_SHORT = 20 } },
     { name = "Dégâts magiques", role = "DAMAGER", damage = "MAGIC", weights = {
         ITEM_MOD_SPELL_DAMAGE_DONE_SHORT = 100, ITEM_MOD_INTELLECT_SHORT = 70, ITEM_MOD_HIT_RATING_SHORT = 85,
+        -- bonus d'école : valeur de départ générique (ne profite qu'aux sorts de cette école)
+        ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT = 50, ITEM_MOD_FIRE_DAMAGE_DONE_SHORT = 50, ITEM_MOD_FROST_DAMAGE_DONE_SHORT = 50,
+        ITEM_MOD_NATURE_DAMAGE_DONE_SHORT = 50, ITEM_MOD_ARCANE_DAMAGE_DONE_SHORT = 50, ITEM_MOD_HOLY_DAMAGE_DONE_SHORT = 50,
         ITEM_MOD_CRIT_RATING_SHORT = 60, ITEM_MOD_HASTE_RATING_SHORT = 60, ITEM_MOD_STAMINA_SHORT = 15 } },
     { name = "Dégâts physiques", role = "DAMAGER", damage = "PHYSICAL", weights = {
         ITEM_MOD_ATTACK_POWER_SHORT = 50, ITEM_MOD_STRENGTH_SHORT = 80, ITEM_MOD_AGILITY_SHORT = 80,
@@ -49,9 +53,28 @@ local function Migrate(db)
     db.schema = 2
 end
 
+-- Version 3 : bonus de dégâts par école et dégâts de sorts d'un soigneur (80 -> 10 si non modifié).
+local function Migrate3(db)
+    if (db.schema or 1) >= 3 then return end
+    for _, p in ipairs(db.profiles) do
+        local default
+        for _, d in ipairs(DEFAULTS) do if d.name == p.name then default = d end end
+        if default then
+            for key, w in pairs(default.weights) do
+                if key:find("_DAMAGE_DONE_SHORT$") and p.weights[key] == nil then p.weights[key] = w end
+            end
+            if p.name == "Soigneur" and p.weights.ITEM_MOD_SPELL_DAMAGE_DONE_SHORT == 80 then
+                p.weights.ITEM_MOD_SPELL_DAMAGE_DONE_SHORT = 10
+            end
+        end
+    end
+    db.schema = 3
+end
+
 function Profiles.Init(db)
     if not db.profiles or #db.profiles == 0 then db.profiles = Copy(DEFAULTS) end
     Migrate(db)
+    Migrate3(db)
     if not Profiles.Find(db.activeProfile, db) then db.activeProfile = db.profiles[1].name end
 end
 

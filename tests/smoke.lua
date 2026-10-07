@@ -34,7 +34,7 @@ local function files(p) local t = {}; for l in io.lines(p) do if l:match("%.lua$
 check("TOC identiques", files("ForeverStuffBook/ForeverStuffBook.toc") == files("ForeverStuffBook/ForeverStuffBook_Camelot.toc"))
 
 handlers.onEvent(nil, "ADDON_LOADED", "ForeverStuffBook")
-check("schéma des SavedVariables à jour", FSB.db.schema == 2)
+check("schéma des SavedVariables à jour", FSB.db.schema == 3)
 check("SavedVariables initialisées", ForeverStuffBookDB and FSB.db.enabled and #FSB.db.profiles == 4)
 
 local tt = { n = {}, GetItem = function(s) return "x", s.link end,

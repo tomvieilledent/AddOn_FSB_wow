@@ -28,8 +28,17 @@ check("aucune info : aucun filtre", #SE.ClassProfiles(FSB.db.profiles, nil, buil
 local old = { profiles = { { name = "X", weights = { ITEM_MOD_HEALING_POWER_SHORT = 7, ITEM_MOD_SPELL_POWER_SHORT = 3 } } } }
 FSB.Profiles.Init(old)
 check("migration : clé de soins renommée", old.profiles[1].weights.ITEM_MOD_SPELL_HEALING_DONE_SHORT == 7
-    and old.profiles[1].weights.ITEM_MOD_HEALING_POWER_SHORT == nil and old.schema == 2)
+    and old.profiles[1].weights.ITEM_MOD_HEALING_POWER_SHORT == nil and old.schema == 3)
 check("stats vues en jeu non signalées inconnues", FSB.Stats.IsKnown("RESISTANCE5_NAME") and FSB.Stats.IsKnown("ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT"))
+local mig = { profiles = { { name = "Soigneur", weights = { ITEM_MOD_SPELL_DAMAGE_DONE_SHORT = 80 } },
+    { name = "Dégâts magiques", weights = { ITEM_MOD_SPELL_DAMAGE_DONE_SHORT = 100 } } }, schema = 2 }
+FSB.Profiles.Init(mig)
+check("migration 3 : soigneur peu DPS, écoles ajoutées",
+    mig.profiles[1].weights.ITEM_MOD_SPELL_DAMAGE_DONE_SHORT == 10 and mig.profiles[2].weights.ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT == 50)
+local SHD = "ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT"
+local shadowItem = { [SHD] = 40 }
+check("bonus Ombre : vaut plus pour un profil DPS magique que pour un soigneur",
+    FSB.ScoreEngine.Score(shadowItem, mig.profiles[2].weights) > FSB.ScoreEngine.Score(shadowItem, mig.profiles[1].weights))
 
 -- Sets -------------------------------------------------------------------------------------
 local thresholds = function() return { 2, 4 } end

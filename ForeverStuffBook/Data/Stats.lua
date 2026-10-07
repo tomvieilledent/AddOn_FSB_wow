@@ -15,6 +15,12 @@ Stats.KEYS = {
     { key = "ITEM_MOD_SPIRIT_SHORT",            alias = "esprit",   label = "Esprit" },
     { key = "ITEM_MOD_ATTACK_POWER_SHORT",      alias = "pa",       label = "Puissance d'attaque" },
     { key = "ITEM_MOD_SPELL_DAMAGE_DONE_SHORT",       alias = "ps",       label = "Puissance des sorts" },
+    { key = "ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT", alias = "ombre",   label = "Dégâts Ombre" },
+    { key = "ITEM_MOD_FIRE_DAMAGE_DONE_SHORT",   alias = "feu",     label = "Dégâts Feu" },
+    { key = "ITEM_MOD_FROST_DAMAGE_DONE_SHORT",  alias = "givre",   label = "Dégâts Givre" },
+    { key = "ITEM_MOD_NATURE_DAMAGE_DONE_SHORT", alias = "nature",  label = "Dégâts Nature" },
+    { key = "ITEM_MOD_ARCANE_DAMAGE_DONE_SHORT", alias = "arcanes", label = "Dégâts Arcanes" },
+    { key = "ITEM_MOD_HOLY_DAMAGE_DONE_SHORT",   alias = "sacre",   label = "Dégâts Sacré" },
     { key = "ITEM_MOD_SPELL_HEALING_DONE_SHORT",     alias = "soins",    label = "Puissance des soins" },
     { key = "ITEM_MOD_MANA_REGENERATION_SHORT", alias = "mp5",      label = "MP5" },
     { key = "ITEM_MOD_CRIT_RATING_SHORT",       alias = "crit",     label = "Critique" },
@@ -30,11 +36,8 @@ Stats.KEYS = {
 }
 
 -- Clés vues en jeu, volontairement hors score pour l'instant (pas de poids, pas dans l'interface) :
--- dégâts par école, résistances, régénération de vie. Elles ne sont pas signalées comme inconnues.
+-- résistances, régénération de vie. Elles ne sont pas signalées comme inconnues.
 Stats.IGNORED = {
-    ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT = true, ITEM_MOD_FIRE_DAMAGE_DONE_SHORT = true,
-    ITEM_MOD_NATURE_DAMAGE_DONE_SHORT = true, ITEM_MOD_FROST_DAMAGE_DONE_SHORT = true,
-    ITEM_MOD_ARCANE_DAMAGE_DONE_SHORT = true, ITEM_MOD_HOLY_DAMAGE_DONE_SHORT = true,
     ITEM_MOD_SHADOW_RESISTANCE_SHORT = true, ITEM_MOD_FIRE_RESISTANCE_SHORT = true,
     ITEM_MOD_NATURE_RESISTANCE_SHORT = true, ITEM_MOD_FROST_RESISTANCE_SHORT = true,
     ITEM_MOD_ARCANE_RESISTANCE_SHORT = true, ITEM_MOD_HOLY_RESISTANCE_SHORT = true,
