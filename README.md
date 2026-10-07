@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/logo.png" alt="Forever Stuff Book" width="220"></p>
+
 # Forever Stuff Book (FSB)
 
 Développé par **Koga / Fitaxal**. Projet 100 % open source (licence MIT, voir `LICENSE` et `CONTRIBUTING.md`).

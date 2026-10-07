@@ -8,7 +8,7 @@ FSB.UI = UI
 -- Onglet « Stats » temporaire : à passer à false (ou supprimer BuildStatsTab) une fois les poids équilibrés.
 UI.SHOW_STATS_TAB = true
 
-local WIDTH, HEIGHT = 440, 500
+local WIDTH, HEIGHT = 440, 520
 local frame
 local weightBoxes = {}
 local texts = {} -- { widget, clé de texte } : réaffichés au changement de langue
@@ -25,7 +25,9 @@ local function Resolve(text, widget)
 end
 
 local function Label(parent, text, x, y, template)
-    local fs = parent:CreateFontString(nil, "OVERLAY", template or "GameFontNormalSmall")
+    -- Police inexistante sur ce client : repli sur une police sûre plutôt qu'une erreur qui casserait /fsb.
+    local ok, fs = pcall(parent.CreateFontString, parent, nil, "OVERLAY", template or "GameFontNormalSmall")
+    if not ok or not fs then fs = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall") end
     fs:SetPoint("TOPLEFT", x, y)
     fs:SetText(Resolve(text, fs))
     return fs
@@ -65,7 +67,8 @@ function UI.Refresh()
     frame.enabled:Refresh(); frame.icons:Refresh(); frame.details:Refresh()
     frame.status:SetText(FSB.Spec.Label())
     frame.devCommands:SetText(table.concat(FSB.L.HELP, "\n"))
-    frame.credits:SetText(FSB.L.HOME_CREDITS .. "   ·   v" .. FSB.Utils.AddonVersion(FSB.name or "ForeverStuffBook"))
+    frame.credits:SetText(FSB.L.HOME_CREDITS)
+    frame.version:SetText("v" .. FSB.Utils.AddonVersion(FSB.name or "ForeverStuffBook"))
     frame.langFR:SetEnabled(FSB.language ~= "frFR")
     frame.langEN:SetEnabled(FSB.language ~= "enUS")
     if frame.statsTab then
@@ -89,12 +92,38 @@ end
 
 local TOP = -64 -- haut du contenu des onglets
 
--- Page d'accueil : descriptif, fonctionnement et crédits.
+-- Page d'accueil : logo, descriptif, verdicts expliqués, crédits.
+local LOGO = "Interface\\AddOns\\ForeverStuffBook\\Media\\logo"
+
 local function BuildHomeTab(tab)
-    Paragraph(tab, "HOME_DESC", 16, -4, WIDTH - 40)
-    Paragraph(tab, "HOME_HOW", 16, -96, WIDTH - 40, "GameFontNormalSmall")
-    frame.credits = tab:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    frame.credits:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 20, 18)
+    local logo = tab:CreateTexture(nil, "ARTWORK")
+    logo:SetSize(104, 104); logo:SetPoint("TOPLEFT", 14, -2)
+    logo:SetTexture(LOGO)
+
+    Label(tab, "UI_TITLE", 132, -22, "GameFontNormalHuge")
+    Label(tab, "HOME_TAGLINE", 134, -52, "GameFontHighlight")
+    frame.version = Label(tab, "", 134, -72, "GameFontDisableSmall")
+
+    -- filet doré sous l'en-tête
+    local rule = tab:CreateTexture(nil, "ARTWORK")
+    rule:SetPoint("TOPLEFT", 16, -112); rule:SetSize(WIDTH - 40, 1)
+    if rule.SetColorTexture then rule:SetColorTexture(1, 0.82, 0, 0.5) else rule:SetTexture(1, 0.82, 0, 0.5) end
+
+    Paragraph(tab, "HOME_DESC", 16, -124, WIDTH - 40, "GameFontHighlightSmall")
+
+    local rows = { { "HOME_V1", "HOME_V1_DESC" }, { "HOME_V2", "HOME_V2_DESC" },
+        { "HOME_V3", "HOME_V3_DESC" }, { "HOME_V4", "HOME_V4_DESC" } }
+    for i, row in ipairs(rows) do
+        local y = -196 - (i - 1) * 40
+        local title = Label(tab, row[1], 20, y, "GameFontNormal")
+        title:SetWidth(WIDTH - 50); title:SetJustifyH("LEFT")
+        local desc = Label(tab, row[2], 20, y - 16, "GameFontHighlightSmall")
+        desc:SetWidth(WIDTH - 50); desc:SetJustifyH("LEFT")
+    end
+
+    Paragraph(tab, "HOME_NOTE", 16, -364, WIDTH - 40, "GameFontDisableSmall")
+    frame.credits = tab:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    frame.credits:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 20, 16)
 end
 
 -- Onglet Commandes : liste des commandes et informations pour modifier l'addon (open source).
