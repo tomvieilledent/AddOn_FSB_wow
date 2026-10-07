@@ -55,6 +55,18 @@ local frostMageNoGain = { name = "Givrus", weights = { [FROST] = 100 }, equipped
 gctx.members = { frostMageNoGain }
 check("bonus Givre : pas d'upgrade pour lui -> à prendre", FSB.Verdict.Group(gctx).kind == "TAKE")
 
+-- Toutes les écoles de magie suivent la même règle
+for _, key in ipairs(FSB.Stats.SCHOOL_KEYS) do
+    local other = key == FIRE and FROST or FIRE
+    local pureHealer = { name = "Soin pur", weights = { [HP] = 100 } }
+    local c = { equipLoc = "INVTYPE_CHEST", stats = { [HP] = 30, [key] = 40 },
+        equipped = { [S.CHEST] = item({ [HP] = 20 }) }, profiles = { pureHealer }, active = pureHealer }
+    c.members = { { name = "Cible", weights = { [key] = 100 }, equipped = { [S.CHEST] = { stats = { [key] = 30 } } } } }
+    check("école " .. key .. " : meilleur pour le spécialiste", FSB.Verdict.Group(c).kind == "BETTER_OTHER")
+    c.members = { { name = "Autre", weights = { [other] = 100 }, equipped = {} } }
+    check("école " .. key .. " : autre école non concernée", FSB.Verdict.Group(c).kind == "TAKE")
+end
+
 -- Sets -------------------------------------------------------------------------------------
 local thresholds = function() return { 2, 4 } end
 local eq = { [S.HEAD] = item({}, 7), [S.CHEST] = item({}, 7), [S.LEGS] = item({}, 7), [S.HANDS] = item({}, 9) }
