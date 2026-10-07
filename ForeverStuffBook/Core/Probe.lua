@@ -161,3 +161,25 @@ function Probe.Specs(add)
     if GetShapeshiftFormID then add("forme : " .. tostring(select(2, pcall(GetShapeshiftFormID)))) end
     if UnitGroupRolesAssigned then add("rôle de groupe : " .. tostring(select(2, pcall(UnitGroupRolesAssigned, "player")))) end
 end
+
+-- /fsb specs : table brute des spécialisations de toutes les classes (id, nom, rôle, stat principale...).
+function Probe.AllSpecs()
+    local lines = {}
+    local function add(s) lines[#lines + 1] = s end
+    for classID = 1, 15 do
+        local okN, num = pcall(function() return C_SpecializationInfo.GetNumSpecializationsForClassID(classID) end)
+        if okN and num and num > 0 then
+            local okC, className = pcall(function() return select(1, GetClassInfo(classID)) end)
+            add("classe " .. classID .. " " .. tostring(okC and className or "?") .. " : " .. num .. " spé(s)")
+            for i = 1, num do
+                local ok, packed = pcall(function() return { GetSpecializationInfoForClassID(classID, i) } end)
+                local parts = {}
+                if ok then for k = 1, 7 do parts[k] = tostring(packed[k]) end end
+                add("  " .. i .. " : " .. (ok and table.concat(parts, " | ") or "erreur"))
+            end
+        end
+    end
+    if #lines == 0 then add("aucune spécialisation lisible") end
+    if FSB.db then FSB.db.allSpecs = lines end
+    for _, l in ipairs(lines) do FSB.Utils.Print(l) end
+end

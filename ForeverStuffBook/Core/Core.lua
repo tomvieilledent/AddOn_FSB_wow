@@ -143,6 +143,8 @@ function Commands.specprofil(rest)
     if FSB.Spec.MapCurrentTo(rest) then Print(FSB.L.SPEC_MAPPED:format(rest)) else Print(FSB.L.PROFILE_UNKNOWN:format(rest)) end
 end
 
+function Commands.specs() FSB.Probe.AllSpecs() end
+
 function Commands.debug() FSB.Probe.Debug() end
 
 function Commands.sonde() FSB.Probe.Print() end

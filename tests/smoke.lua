@@ -59,6 +59,8 @@ SlashCmdList.FSB("debug")
 check("/fsb debug sans objet : pas d'erreur", true)
 FSB.lastLink = "ring"; FSB.Probe.skipTooltips = true; SlashCmdList.FSB("debug")
 check("/fsb debug stocke le détail", type(FSB.db.debug) == "table" and #FSB.db.debug > 3)
+SlashCmdList.FSB("specs")
+check("/fsb specs sans API : pas d'erreur", FSB.db.allSpecs ~= nil)
 SlashCmdList.FSB("sonde")
 check("/fsb sonde stocke un rapport", type(FSB.db.probe) == "table" and #FSB.db.probe > 10)
 local t2 = { n = {}, GetItem = function(s) return "x", "ring" end,
