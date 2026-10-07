@@ -26,7 +26,8 @@ end
 local function Check(parent, text, x, y, get, set)
     local c = CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
     c:SetPoint("TOPLEFT", x, y); c:SetSize(24, 24)
-    c.text:SetText(text)
+    local label = c.Text or c.text
+    if label then label:SetText(text) end
     c:SetScript("OnClick", function(self) set(self:GetChecked() and true or false) end)
     c.Refresh = function(self) self:SetChecked(get()) end
     return c

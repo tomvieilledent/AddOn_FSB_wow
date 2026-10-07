@@ -41,6 +41,7 @@ end
 local function AppendAnalysis(tooltip)
     if not FSB.db or not FSB.db.enabled then return end
     if not tooltip or not tooltip.GetItem then return end
+    if tooltip.fsbDone then return end -- une seule fois par affichage
 
     local ok, _, link = pcall(tooltip.GetItem, tooltip)
     if not ok or not link then return end
@@ -59,12 +60,23 @@ local function AppendAnalysis(tooltip)
     AddDetails(tooltip, verdict)
     tooltip:AddLine(FSB.L.PROFILE .. " : " .. FSB.db.activeProfile, unpack(GREY))
     tooltip:AddLine(FSB.L.ANALYSIS_TITLE, 0.2, 1.0, 0.6)
+    tooltip.fsbDone = true
     tooltip:Show() -- recalcule la taille du tooltip
 end
+
+-- Le drapeau est remis à zéro quand le tooltip est vidé.
+local function HookReset(tooltip)
+    if tooltip and tooltip.HookScript and not tooltip.fsbHooked then
+        tooltip.fsbHooked = true
+        tooltip:HookScript("OnTooltipCleared", function(self) self.fsbDone = nil end)
+    end
+end
+if GameTooltip then HookReset(GameTooltip) end
 
 -- API moderne si disponible, sinon repli sur le script classique.
 if TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall and Enum and Enum.TooltipDataType then
     TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip)
+        HookReset(tooltip)
         AppendAnalysis(tooltip)
     end)
 elseif GameTooltip and GameTooltip.HookScript then

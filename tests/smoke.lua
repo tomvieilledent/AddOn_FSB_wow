@@ -54,5 +54,13 @@ SlashCmdList.FSB("set 150"); check("/fsb set", FSB.Profiles.Find("Test").setBonu
 SlashCmdList.FSB("supprimer Test"); check("/fsb supprimer", not FSB.Profiles.Find("Test"))
 SlashCmdList.FSB("off"); check("/fsb off", FSB.db.enabled == false)
 SlashCmdList.FSB("etat"); SlashCmdList.FSB("aide"); SlashCmdList.FSB("inconnus")
+SlashCmdList.FSB("sonde")
+check("/fsb sonde stocke un rapport", type(FSB.db.probe) == "table" and #FSB.db.probe > 10)
+local t2 = { n = {}, GetItem = function(s) return "x", "ring" end,
+    AddLine = function(s, t) s.n[#s.n + 1] = t end, Show = function() end }
+_G.C_Item.GetItemInfoInstant = function() return 1, "a", "b", "INVTYPE_FINGER" end
+FSB.db.enabled = true
+hooks.tooltip(t2); local first = #t2.n; hooks.tooltip(t2)
+check("tooltip : pas de doublon", first > 0 and #t2.n == first)
 SlashCmdList.FSB("")
 T.finish("chargement")
