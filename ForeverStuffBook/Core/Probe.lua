@@ -36,6 +36,8 @@ local function Sample(lines)
         if link then add("échantillon : emplacement " .. slot); break end
     end
     if not link then return add("échantillon : aucun objet équipé") end
+    local rawOk, raw = pcall(C_Item.GetItemStats, link)
+    add("retour brut de GetItemStats : ok=" .. tostring(rawOk) .. " type=" .. type(raw))
     local stats = FSB.Compat.GetStats(link)
     local keys = {}
     for k, v in pairs(stats or {}) do keys[#keys + 1] = k .. "=" .. tostring(v) end
@@ -251,17 +253,17 @@ function Probe.Traits(add)
         add("TRAITS arbre " .. treeID .. " : " .. ((okN and nodes) and #nodes or "illisible") .. " nœuds")
         for _, nodeID in ipairs((okN and nodes) or {}) do
             local okNi, info = pcall(function() return C_Traits.GetNodeInfo(configID, nodeID) end)
-            if okNi and type(info) == "table" and (info.currentRank or 0) > 0 and shown < 120 then
+            if okNi and type(info) == "table" and shown < 120 then
                 shown = shown + 1
                 if shown == 1 then add("TRAITS champs d'un nœud : " .. Keys(info)) end
                 local entryID = (info.activeEntry and info.activeEntry.entryID) or (info.entryIDs and info.entryIDs[1])
-                add(("  nœud %s rang %s/%s type=%s sous-arbre=%s pos=%s,%s : %s"):format(tostring(nodeID),
-                    tostring(info.currentRank), tostring(info.maxRanks), tostring(info.type), tostring(info.subTreeID),
+                add(("  nœud %s rang %s/%s type=%s pos=%s,%s : %s"):format(tostring(nodeID),
+                    tostring(info.currentRank), tostring(info.maxRanks), tostring(info.type),
                     tostring(info.posX), tostring(info.posY), EntryName(configID, entryID)))
             end
         end
     end
-    add("TRAITS nœuds achetés affichés : " .. shown)
+    add("TRAITS nœuds affichés (tous, achetés ou non) : " .. shown)
 end
 
 -- Environnement : version, client, langue, personnage (en tête du rapport complet).

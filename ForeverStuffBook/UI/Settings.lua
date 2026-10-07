@@ -128,7 +128,10 @@ local function BuildStatsTab(tab)
         local col, row = (i - 1) % 2, math.floor((i - 1) / 2)
         local x, y = 16 + col * 210, -48 - row * 20
         local name = Label(tab, FSB.Stats.Label(s.key), x, y)
-        local value = Label(tab, "", x + 150, y, "GameFontHighlightSmall")
+        name:SetWidth(150); name:SetJustifyH("LEFT")
+        if name.SetWordWrap then name:SetWordWrap(false) end -- jamais de débordement sur la colonne voisine
+        local value = Label(tab, "", x + 156, y, "GameFontHighlightSmall")
+        value:SetWidth(40); value:SetJustifyH("LEFT")
         weightBoxes[#weightBoxes + 1] = { key = s.key, name = name, box = value }
     end
     local bottom = -48 - math.ceil(#FSB.Stats.KEYS / 2) * 20 - 8
@@ -156,12 +159,14 @@ local function Build()
         tab:SetPoint("TOPLEFT", 0, TOP); tab:SetPoint("BOTTOMRIGHT", 0, 0)
         return tab
     end
-    local home = NewTab()
-    BuildHomeTab(home)
-    local general = NewTab()
-    BuildGeneralTab(general)
-    local tabs = { home, general }
-    local buttons = {}
+    -- Ordre des onglets : Accueil, Stats (temporaire), Commandes, Réglages.
+    local defs = {
+        { "UI_TAB_HOME", BuildHomeTab },
+        { "UI_TAB_STATS", function(tab) frame.statsTab = tab; BuildStatsTab(tab) end, temporary = true },
+        { "UI_TAB_DEV", BuildDevTab },
+        { "UI_TAB_GENERAL", BuildGeneralTab },
+    }
+    local tabs, buttons = {}, {}
     local function Show(index)
         for i, t in ipairs(tabs) do
             if i == index then t:Show() else t:Hide() end
@@ -169,18 +174,14 @@ local function Build()
         end
         UI.Refresh()
     end
-    local x = 16
-    buttons[1] = Button(frame, "UI_TAB_HOME", 98, x, -38, function() Show(1) end)
-    buttons[2] = Button(frame, "UI_TAB_GENERAL", 98, x + 104, -38, function() Show(2) end)
-    local dev = NewTab()
-    BuildDevTab(dev)
-    tabs[3] = dev
-    buttons[3] = Button(frame, "UI_TAB_DEV", 98, x + 208, -38, function() Show(3) end)
-    if UI.SHOW_STATS_TAB then
-        frame.statsTab = NewTab()
-        BuildStatsTab(frame.statsTab)
-        tabs[4] = frame.statsTab
-        buttons[4] = Button(frame, "UI_TAB_STATS", 98, x + 312, -38, function() Show(4) end)
+    for _, def in ipairs(defs) do
+        if not def.temporary or UI.SHOW_STATS_TAB then
+            local index = #tabs + 1
+            local tab = NewTab()
+            def[2](tab)
+            tabs[index] = tab
+            buttons[index] = Button(frame, def[1], 98, 16 + (index - 1) * 104, -38, function() Show(index) end)
+        end
     end
     Show(1)
     frame:Hide()

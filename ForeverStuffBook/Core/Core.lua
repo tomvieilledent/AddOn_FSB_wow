@@ -22,6 +22,12 @@ local function InitDB()
         FSB.language = (GetLocale and GetLocale() == "frFR") and "frFR" or "enUS"
     end
     -- Le mode manuel n'existe plus : on nettoie les anciens réglages.
+    for key in pairs(FSB.db.unknownStats or {}) do
+        if FSB.Stats.IsKnown(key) then FSB.db.unknownStats[key] = nil end -- reconnues depuis
+    end
+    for key in pairs(FSB.db.specChoice or {}) do
+        if not tostring(key):find(":", 1, true) then FSB.db.specChoice[key] = nil end -- ancien format de clé
+    end
     FSB.db.manualSpecID, FSB.db.autoProfile, FSB.db.specPromptDone, FSB.db.specProfiles = nil, nil, nil, nil
     FSB.build = (select(1, GetBuildInfo and GetBuildInfo() or "?") or "?") .. " v" .. FSB.Utils.AddonVersion(ADDON)
     FSB.Profiles.Init(FSB.db)
@@ -162,7 +168,9 @@ function Commands.sonde() FSB.Probe.Print() end
 
 function Commands.inconnus()
     local lines = {}
-    for key in pairs(FSB.db.unknownStats) do lines[#lines + 1] = key end
+    for key in pairs(FSB.db.unknownStats) do
+        if not FSB.Stats.IsKnown(key) then lines[#lines + 1] = key end
+    end
     table.sort(lines)
     if #lines == 0 then lines[1] = FSB.L.NO_UNKNOWN end
     FSB.Utils.Report(lines)
