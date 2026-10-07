@@ -97,8 +97,8 @@ check("C_Traits : nombre de bandes inattendu -> aucune devinette", FSB.Spec.Acti
 nodes[7] = { 10280, 5130, 0 }
 nodes[1][3], nodes[3][3], nodes[6][3] = 4, 4, 4
 check("C_Traits : égalité -> aucune devinette", FSB.Spec.ActiveTree() == nil)
-withPositions = false; nodes[1][3], nodes[3][3], nodes[6][3] = 0, 5, 0
-check("C_Traits : sans positions, repli sur groupIDs", select(2, FSB.Spec.ActiveTree()) == "Sacré")
+withPositions = false
+check("C_Traits : sans positions, aucune lecture (groupIDs non fiables)", FSB.Spec.ActiveTree() == nil)
 _G.C_ClassTalents, _G.C_Traits = nil, nil
 FSB.db.specChoice = {}; detected = nil
 check("spé non détectée : aucune question ni changement", not FSB.Spec.NeedsChoice() and FSB.Spec.Apply() == false)

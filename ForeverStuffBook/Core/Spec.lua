@@ -61,9 +61,9 @@ local function ClassFile() return select(2, UnitClass("player")) end
 -- Points investis par arbre de talents, système moderne (C_Traits). Les trois arbres classiques sont rangés côte à
 -- côte dans une même arborescence (VERIFIED sur un prêtre : Discipline x=1020..2820, Sacré x=5020..6820,
 -- Ombre x=9080..10880) : l'arbre d'un nœud se lit donc à sa position horizontale (bandes de 4000). Les nœuds à
--- position verticale aberrante (> 8000, ex. « Spécialisation (Sacré) » à y=21300) sont ignorés. Repli : regroupement
--- par `groupIDs`. Dans les deux cas, le nombre d'arbres trouvés doit égaler celui des arbres connus de la classe
--- (aucune devinette sinon).
+-- position verticale aberrante (> 8000, ex. « Spécialisation (Sacré) » à y=21300) sont ignorés. Les `groupIDs`
+-- ne servent pas : ce sont des groupes de lignes imbriqués, pas un groupe par arbre (vu en jeu). Le nombre
+-- d'arbres trouvés doit égaler celui des arbres connus de la classe (aucune devinette sinon).
 local BAND_WIDTH, MAX_Y = 4000, 8000
 
 local function ReadTraitTrees()
@@ -73,7 +73,7 @@ local function ReadTraitTrees()
     local okC, cfg = pcall(function() return C_Traits.GetConfigInfo(configID) end)
     if not okC or type(cfg) ~= "table" or type(cfg.treeIDs) ~= "table" then return nil end
 
-    local byBand, byGroup = {}, {}
+    local byBand = {}
     for _, treeID in ipairs(cfg.treeIDs) do
         local okN, nodes = pcall(function() return C_Traits.GetTreeNodes(treeID) end)
         if not okN or type(nodes) ~= "table" then return nil end
@@ -86,8 +86,6 @@ local function ReadTraitTrees()
                     local band = math.floor(x / BAND_WIDTH)
                     byBand[band] = (byBand[band] or 0) + rank
                 end
-                local group = type(info.groupIDs) == "table" and info.groupIDs[1]
-                if group then byGroup[group] = (byGroup[group] or 0) + rank end
             end
         end
     end
@@ -96,9 +94,8 @@ local function ReadTraitTrees()
     local known = FSB.Classes.TREES[classFile or ""]
     if not known then return nil end
     local names = FSB.L.TREE_NAMES and FSB.L.TREE_NAMES[classFile]
-    -- Positions disponibles : elles seules décident (un nombre de bandes inattendu = aucune lecture). Sinon : groupes.
-    local source = next(byBand) and byBand or byGroup
     do
+        local source = byBand
         local keys = {}
         for key in pairs(source) do keys[#keys + 1] = key end
         table.sort(keys)

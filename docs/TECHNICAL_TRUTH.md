@@ -58,3 +58,6 @@ Addon passif : aucune action de jeu, aucune simulation d'entrée, aucune API pro
 - Un nœud « Spécialisation (Sacré) » (105865) a `posY` = 21300 : ignoré (position aberrante).
 - 13 points investis (5 talents) en Discipline pour un niveau 23. Les noms de sorts sont lisibles (localisés).
 - Autres classes : même disposition supposée (UNVERIFIED) ; FSB n'accepte la lecture que si le nombre d'arbres trouvés égale celui attendu.
+- `groupIDs` des nœuds (VERIFIED, rapport) : groupes de lignes imbriqués (ex. 11604, 12760...), pas un groupe par arbre ; trois groupes
+  « d'arbre » (11608 Discipline, 11615 Sacré, 11622 Ombre) existent mais sont mêlés aux autres : non utilisés. Seule la position est utilisée.
+- La détection d'arbre fonctionne en jeu (clé de rôle mémorisée `1487:1` = arbre n°1 Discipline).

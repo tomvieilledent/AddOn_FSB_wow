@@ -127,27 +127,17 @@ end
 
 -- /fsb etat : liste brute des spécialisations de la classe et de la spé détectée.
 function Probe.Specs(add)
-    -- Verdict de lecture des talents (ce que FSB utilise réellement pour trouver la spé).
-    if not GetNumTalentTabs or not GetTalentTabInfo then
-        add("LECTURE DES TALENTS : impossible — GetNumTalentTabs/GetTalentTabInfo absents (" ..
-            tostring(GetNumTalentTabs ~= nil) .. "/" .. tostring(GetTalentTabInfo ~= nil) .. ")")
+    -- Lecture des talents telle que FSB l'utilise (ancien système puis C_Traits par positions).
+    local trees = FSB.Spec.ReadTrees()
+    if not trees then
+        add("LECTURE DES TALENTS : impossible (aucun arbre lisible, ou nombre d'arbres inattendu)")
     else
-        local trees = FSB.Spec.ReadTrees()
-        if not trees then
-            add("LECTURE DES TALENTS : impossible — format de GetTalentTabInfo non reconnu (voir onglets ci-dessous)")
-        else
-            local parts = {}
-            for i, t in ipairs(trees) do parts[i] = tostring(t.name) .. "=" .. t.points end
-            local idx, name = FSB.Spec.ActiveTree()
-            add("LECTURE DES TALENTS : " .. table.concat(parts, ", ") .. " -> arbre actif : " .. tostring(name or "aucun/égalité"))
-        end
+        local parts = {}
+        for i, t in ipairs(trees) do parts[i] = tostring(t.name) .. "=" .. t.points end
+        local _, name = FSB.Spec.ActiveTree()
+        add("LECTURE DES TALENTS : " .. table.concat(parts, ", ") .. " -> arbre actif : " .. tostring(name or "aucun/égalité"))
     end
-    local function pack(...) return { n = select("#", ...), ... } end
-    local function show(t)
-        local out = {}
-        for i = 1, t.n do out[i] = tostring(t[i]) end
-        return table.concat(out, " | ")
-    end
+    add("libellé affiché par /fsb : " .. FSB.Spec.Label())
     local classID = select(3, UnitClass("player"))
     local okN, num = pcall(function() return C_SpecializationInfo.GetNumSpecializationsForClassID(classID) end)
     add("classe : " .. tostring(classID) .. " | spés de la classe : " .. tostring(okN and num))
