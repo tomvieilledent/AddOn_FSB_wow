@@ -95,12 +95,10 @@ function Profiles.GetActive() return Profiles.Find(FSB.db.activeProfile) end
 
 local function Changed() if FSB.Analyzer then FSB.Analyzer.InvalidateAll() end end
 
--- auto = true : changement fait par la détection de spé ; sinon (choix de l'utilisateur) on
--- désactive la sélection automatique.
-function Profiles.SetActive(name, auto)
+-- Le profil actif est toujours choisi par la détection de spé (et le choix de rôle), jamais à la main.
+function Profiles.SetActive(name)
     if not Profiles.Find(name) then return false end
     FSB.db.activeProfile = name
-    if not auto then FSB.db.autoProfile = false end
     Changed()
     return true
 end
@@ -116,7 +114,7 @@ end
 
 function Profiles.Delete(name)
     local list = FSB.db.profiles
-    if #list <= 1 then return false end
+    if #list <= 1 or Profiles.IsBuiltin(name) then return false end -- les profils par défaut restent
     for i, p in ipairs(list) do
         if p.name == name then
             table.remove(list, i)

@@ -27,8 +27,9 @@ Tests en jeu à effectuer : voir [`docs/TESTS_INGAME.md`](docs/TESTS_INGAME.md).
 
 ## Commandes
 
-`/fsb` (interface) · `on|off` · `profils` · `profil <nom>` · `auto` · `spe` · `specprofil <profil>` · `nouveau <nom>` ·
-`supprimer <nom>` · `poids [<stat> <valeur>]` · `set [<valeur>]` · `inconnus` · `etat` · `aide`
+`/fsb` (interface) · `on|off` · `role` · `profils` · `nouveau <nom>` · `supprimer <nom>` · `poids [<stat> <valeur>]` ·
+`set [<valeur>]` · `inconnus` · `etat` · `log` · `mauvais [texte]` · `debug` · `sonde` · `specs` · `aide`
+(les sorties d'information s'ouvrent dans une fenêtre copiable)
 
 ## Moteur
 
@@ -45,8 +46,9 @@ Tests en jeu à effectuer : voir [`docs/TESTS_INGAME.md`](docs/TESTS_INGAME.md).
 - **Sets** : les paliers gagnés/perdus sont détectés (lecture du tooltip, format localisé) et affichés.
   Leur valeur n'est **jamais estimée** : elle ne compte dans le verdict que si l'utilisateur fixe
   `/fsb set <valeur>` (0 par défaut). Paliers illisibles = « analyse partielle ».
-- **Spécialisation** : lue via l'API ; si impossible, choix manuel (Auto ou chaque spé de la classe). Un autre
-  joueur dont la spé est illisible n'est **pas comparé**.
+- **Spécialisation** : lue automatiquement via l'API, sans mode manuel ; le profil actif suit toujours la spé. Si la
+  spé a plusieurs rôles possibles (soin/dégâts, tank/dps), FSB pose la question une fois (mémorisée par spé).
+  Un autre joueur dont la spé est illisible n'est **pas comparé**.
 - **Cache** : par mode (SOLO/GROUPE) et type d'objet. Équipement changé → seuls les types concernés
   (et les objets de set) sont invalidés ; profil/poids/seuils → tout ; données de groupe → cache GROUPE seulement.
 - **Scan de groupe** : un minuteur de 3 s actif seulement en mode groupe tant qu'un membre connecté n'est pas

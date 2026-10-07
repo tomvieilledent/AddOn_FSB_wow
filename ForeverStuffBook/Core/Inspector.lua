@@ -194,7 +194,7 @@ function Inspector.GetComparableMembers()
     local profiles = FSB.Profiles.List()
     for _, m in pairs(members) do
         if m.specID then
-            local profile = FSB.SpecEngine.ProfileForSpec(m.specID, FSB.Spec.Info(m.specID), profiles, FSB.db.specProfiles)
+            local profile = FSB.SpecEngine.ProfileForSpec(m.specID, FSB.Spec.Info(m.specID), profiles, nil)
             if profile then list[#list + 1] = { name = m.name, weights = profile.weights, equipped = m.equipped } end
         end
     end

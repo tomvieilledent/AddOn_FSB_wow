@@ -2,8 +2,8 @@ local ADDON, FSB = ...
 
 FSB.name = ADDON
 local defaults = {
-    enabled = true, autoProfile = true, specPromptDone = false, specChoice = {},
-    unknownStats = {}, specProfiles = {}, display = {},
+    enabled = true, specChoice = {},
+    unknownStats = {}, display = {},
     -- thresholds : nil = valeurs par défaut du VerdictEngine
 }
 
@@ -15,6 +15,8 @@ local function InitDB()
         end
     end
     FSB.db = ForeverStuffBookDB
+    -- Le mode manuel n'existe plus : on nettoie les anciens réglages.
+    FSB.db.manualSpecID, FSB.db.autoProfile, FSB.db.specPromptDone, FSB.db.specProfiles = nil, nil, nil, nil
     FSB.build = (select(1, GetBuildInfo and GetBuildInfo() or "?") or "?") .. " v" .. (GetAddOnMetadata and GetAddOnMetadata(ADDON, "Version") or "?")
     FSB.Profiles.Init(FSB.db)
 end
@@ -38,11 +40,10 @@ local function OnEnteringWorld()
     -- Les données de talents peuvent arriver un peu après la connexion.
     C_Timer.After(3, function()
         FSB.Analyzer.InvalidateAll() -- les données de spé ont pu arriver après les premiers survols
-        if not FSB.Spec.Apply() and not FSB.db.specPromptDone and FSB.UI and FSB.UI.ShowSpecPicker then
-            FSB.db.specPromptDone = true
-            FSB.UI.ShowSpecPicker()
-        else
+        if FSB.Spec.Apply() then
             FSB.Spec.PromptIfNeeded()
+        else
+            FSB.Log.Add("SPE_NON_DETECTEE", { global = true })
         end
     end)
 end
@@ -96,21 +97,6 @@ function Commands.profils()
     FSB.Utils.Report(lines)
 end
 
-function Commands.profil(rest)
-    if rest == "" then return Print(FSB.L.PROFILE_ACTIVE:format(FSB.db.activeProfile)) end
-    if FSB.Profiles.SetActive(rest) then
-        Print(FSB.L.PROFILE_ACTIVE:format(rest))
-    else
-        Print(FSB.L.PROFILE_UNKNOWN:format(rest))
-    end
-end
-
-function Commands.auto()
-    FSB.db.autoProfile = true
-    FSB.Spec.Apply()
-    Print(FSB.L.AUTO_ON)
-end
-
 function Commands.nouveau(rest)
     if FSB.Profiles.Create(rest) then Print(FSB.L.PROFILE_CREATED:format(rest)) else Print(FSB.L.PROFILE_EXISTS:format(rest)) end
 end
@@ -146,12 +132,6 @@ function Commands.set(rest)
 end
 
 function Commands.role() if FSB.UI and FSB.UI.ShowRolePicker then FSB.UI.ShowRolePicker(true) end end
-
-function Commands.spe() if FSB.UI and FSB.UI.ShowSpecPicker then FSB.UI.ShowSpecPicker() end end
-
-function Commands.specprofil(rest)
-    if FSB.Spec.MapCurrentTo(rest) then Print(FSB.L.SPEC_MAPPED:format(rest)) else Print(FSB.L.PROFILE_UNKNOWN:format(rest)) end
-end
 
 function Commands.specs() FSB.Probe.AllSpecs() end
 
@@ -190,10 +170,10 @@ function Commands.etat()
     add(FSB.L.STATE:format(FSB.Context.IsGroupMode() and "GROUPE" or "SOLO",
         FSB.Inspector.CountPending(), #FSB.Inspector.GetComparableMembers()))
     local spec = FSB.Spec.Current()
-    add(FSB.L.STATE_SPEC:format(spec or "?", FSB.db.activeProfile, FSB.db.autoProfile and "auto" or "manuel"))
+    add(FSB.L.STATE_SPEC:format(spec or "?", FSB.db.activeProfile))
     local info = spec and FSB.Spec.Info(spec)
-    add(("Spé brute : détectée=%s manuelle=%s rôle=%s stat principale=%s"):format(
-        tostring(FSB.Spec.Detect()), tostring(FSB.db.manualSpecID),
+    add(("Spé brute : détectée=%s rôle=%s stat principale=%s"):format(
+        tostring(FSB.Spec.Detect()),
         tostring(info and info.role), tostring(info and info.primaryStat)))
     add(FSB.L.LOG_COUNT:format(FSB.Log.Count()))
     FSB.Probe.Specs(add)

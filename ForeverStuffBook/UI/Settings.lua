@@ -6,8 +6,13 @@ local UI = {}
 FSB.UI = UI
 
 local WIDTH, HEIGHT = 440, 620
-local frame, specFrame
+local frame
+local editingName -- profil dont on édite les poids (le profil actif reste choisi par la spé)
 local profileButtons, weightBoxes, thresholdBoxes = {}, {}, {}
+
+local function Editing()
+    return (editingName and FSB.Profiles.Find(editingName)) or FSB.Profiles.GetActive()
+end
 
 local function Label(parent, text, x, y, template)
     local fs = parent:CreateFontString(nil, "OVERLAY", template or "GameFontNormalSmall")
@@ -61,7 +66,11 @@ end
 
 function UI.Refresh()
     if not frame then return end
-    frame.enabled:Refresh(); frame.auto:Refresh(); frame.icons:Refresh(); frame.details:Refresh()
+    frame.enabled:Refresh(); frame.icons:Refresh(); frame.details:Refresh()
+    local specID = FSB.Spec.Current()
+    local info = specID and FSB.Spec.Info(specID)
+    frame.status:SetText(FSB.L.UI_STATUS:format((info and info.name) or "?", FSB.db.activeProfile))
+    local editing = Editing()
 
     local profiles = FSB.Profiles.List()
     for i = 1, #profileButtons do profileButtons[i]:Hide() end
@@ -74,11 +83,12 @@ function UI.Refresh()
         b:ClearAllPoints()
         b:SetPoint("TOPLEFT", 16 + ((i - 1) % 4) * 104, -118 - math.floor((i - 1) / 4) * 24)
         b:SetText((p.name == FSB.db.activeProfile and "* " or "") .. p.name)
-        b:SetScript("OnClick", function() FSB.Profiles.SetActive(p.name); UI.Refresh() end)
+        b:SetEnabled(p ~= editing)
+        b:SetScript("OnClick", function() editingName = p.name; UI.Refresh() end)
         b:Show()
     end
 
-    local active = FSB.Profiles.GetActive()
+    local active = editing
     for _, row in ipairs(weightBoxes) do
         row.box:SetText(active.weights[row.key] and tostring(active.weights[row.key]) or "")
     end
@@ -99,7 +109,7 @@ local function BuildWeights(parent, top)
         local x, y = 16 + col * 210, top - 22 - row * 22
         Label(parent, s.label, x, y - 4)
         local box = NumberBox(parent, x + 120, y, 60, function(value)
-            FSB.Profiles.SetWeight(FSB.Profiles.GetActive(), s.key, value)
+            FSB.Profiles.SetWeight(Editing(), s.key, value)
         end)
         weightBoxes[#weightBoxes + 1] = { key = s.key, box = box }
     end
@@ -116,7 +126,7 @@ local function BuildThresholds(parent, top)
     thresholdBoxes.margin = NumberBox(parent, 290, y, 50, function(v) if v then SetThreshold("otherMargin", v / 100) end end)
     Label(parent, L.UI_SETVALUE, 16, y - 28)
     thresholdBoxes.setValue = NumberBox(parent, 150, y - 24, 60, function(v)
-        FSB.Profiles.SetBonusValue(FSB.Profiles.GetActive(), v or 0)
+        FSB.Profiles.SetBonusValue(Editing(), v or 0)
     end)
 end
 
@@ -143,8 +153,7 @@ local function Build()
     end
     frame.icons = Check(frame, L.UI_ICONS, 190, -38, display("icons"))
     frame.details = Check(frame, L.UI_DETAILS, 290, -38, display("details"))
-    frame.auto = Check(frame, L.UI_AUTO, 12, -62, function() return FSB.db.autoProfile end,
-        function(v) FSB.db.autoProfile = v; if v then FSB.Spec.Apply() end; UI.Refresh() end)
+    frame.status = Label(frame, "", 16, -68, "GameFontHighlightSmall")
     Button(frame, L.UI_PICK_ROLE, 130, 290, -62, function() UI.ShowRolePicker(true) end)
 
     Label(frame, L.UI_PROFILES, 16, -98, "GameFontNormal")
@@ -154,49 +163,14 @@ local function Build()
     nameBox:SetSize(150, 20); nameBox:SetPoint("TOPLEFT", 22, -196); nameBox:SetAutoFocus(false)
     Button(frame, L.UI_NEW, 70, 180, -195, function()
         local name = nameBox:GetText()
-        if FSB.Profiles.Create(name) then nameBox:SetText("") end
+        if FSB.Profiles.Create(name, Editing()) then nameBox:SetText("") end
         UI.Refresh()
     end)
-    Button(frame, L.UI_DELETE, 90, 254, -195, function() FSB.Profiles.Delete(FSB.db.activeProfile); UI.Refresh() end)
+    Button(frame, L.UI_DELETE, 90, 254, -195, function() if FSB.Profiles.Delete(Editing().name) then editingName = nil end; UI.Refresh() end)
 
     local y = BuildWeights(frame, -228)
     BuildThresholds(frame, y - 10)
     frame:Hide()
-end
-
----------------------------------------------------------------------------------------------
--- Choix de la spécialisation (quand la détection est impossible, ou à la demande)
----------------------------------------------------------------------------------------------
-
-function UI.ShowSpecPicker()
-    if specFrame then specFrame:Hide() end
-    local list = FSB.Spec.ListForPlayerClass()
-    specFrame = specFrame or CreateFrame("Frame", "FSBSpecFrame", UIParent, "BackdropTemplate")
-    specFrame:SetSize(260, 70 + (#list + 1) * 28); specFrame:SetPoint("CENTER", 0, 120)
-    specFrame:SetBackdrop({ bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", tile = true, tileSize = 32, edgeSize = 24,
-        insets = { left = 6, right = 6, top = 6, bottom = 6 } })
-    specFrame:SetFrameStrata("DIALOG")
-    specFrame.widgets = specFrame.widgets or {}
-    for _, w in ipairs(specFrame.widgets) do w:Hide() end
-    wipe(specFrame.widgets)
-
-    local title = specFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    title:SetPoint("TOP", 0, -16); title:SetText(FSB.L.SPEC_PICK_TITLE)
-    specFrame.widgets[1] = title
-
-    local function choose(specID)
-        FSB.Spec.SetManual(specID)
-        specFrame:Hide()
-        UI.Refresh()
-    end
-    local entries = { { id = nil, name = FSB.L.SPEC_AUTO } }
-    for _, s in ipairs(list) do entries[#entries + 1] = s end
-    for i, s in ipairs(entries) do
-        local b = Button(specFrame, s.name, 200, 30, -34 - i * 28, function() choose(s.id) end)
-        specFrame.widgets[#specFrame.widgets + 1] = b
-    end
-    specFrame:Show()
 end
 
 -- Question de rôle : proposée seulement quand la spé détectée a plusieurs rôles possibles.

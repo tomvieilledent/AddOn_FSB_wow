@@ -5,13 +5,14 @@ local FSB = H.load{ "Localization/frFR", "Utils/Utils", "Data/Stats", "Data/Prof
     "Core/Context", "Core/Log", "Engine/ScoreEngine", "Engine/EquipmentOptimizer", "Engine/SetBonusEngine",
     "Engine/SpecEngine", "Engine/VerdictEngine", "Engine/ItemAnalyzer", "Core/Spec" }
 local T = H.counter(); local check = T.check
-FSB.db = { autoProfile = true, specChoice = {}, specProfiles = {} }; FSB.Profiles.Init(FSB.db)
+FSB.db = { specChoice = {}, specProfiles = {} }; FSB.Profiles.Init(FSB.db)
 local classFile = "PRIEST"
 _G.UnitClass = function() return "X", classFile, 5 end
 
 local function names(l) local t = {}; for _, p in ipairs(l) do t[#t + 1] = p.name end; return table.concat(t, ",") end
 
-FSB.db.manualSpecID = 1487
+local detected = 1487
+FSB.Spec.Detect = function() return detected end
 check("prêtre : question de rôle nécessaire", FSB.Spec.NeedsChoice())
 check("prêtre : choix = soigneur ou dégâts magiques", names(FSB.Spec.Choices(1487)) == "Soigneur,Dégâts magiques")
 FSB.Spec.Apply()
@@ -22,17 +23,17 @@ FSB.db.activeProfile = "Soigneur"; FSB.Spec.Apply()
 check("le choix mémorisé s'applique", FSB.db.activeProfile == "Dégâts magiques")
 check("OFF-SPÉ du prêtre : ni tank ni physique", names(FSB.Spec.OffspecProfiles()) == "Soigneur,Dégâts magiques")
 
-classFile = "MAGE"; FSB.db.manualSpecID = 5000
+classFile = "MAGE"; detected = 5000
 check("mage : un seul rôle, pas de question", not FSB.Spec.NeedsChoice())
 FSB.Spec.Apply()
 check("mage : profil dégâts magiques appliqué", FSB.db.activeProfile == "Dégâts magiques")
 
-classFile = "DRUID"; FSB.db.manualSpecID = 77
+classFile = "DRUID"; detected = 77
 FSB.Classes.BY_SPEC[77] = { "Tank", "Dégâts physiques" }
 check("druide féral : tank ou dps seulement", names(FSB.Spec.Choices(77)) == "Tank,Dégâts physiques" and FSB.Spec.NeedsChoice())
 FSB.Spec.Choose("Tank")
 check("druide : tank mémorisé pour cette spé", FSB.db.activeProfile == "Tank" and not FSB.Spec.NeedsChoice())
 
-FSB.db.autoProfile = false; FSB.db.specChoice = {}
-check("mode manuel : aucune question", not FSB.Spec.NeedsChoice())
+FSB.db.specChoice = {}; detected = nil
+check("spé non détectée : aucune question ni changement", not FSB.Spec.NeedsChoice() and FSB.Spec.Apply() == false)
 T.finish("rôles")
