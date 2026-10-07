@@ -101,12 +101,13 @@ local function StoreMember(guid, unit)
     local attempts = (previous and previous.attempts or 0) + 1
     local equipped, complete = ReadEquipment(unit)
     members[guid] = {
-        name = UnitName(unit), classID = select(3, UnitClass(unit)),
+        name = UnitName(unit), classID = select(3, UnitClass(unit)), classFile = select(2, UnitClass(unit)),
         specID = ReadSpec(unit), equipped = equipped,
         complete = complete or attempts >= MAX_ATTEMPTS, attempts = attempts,
     }
-    if not members[guid].specID then
-        FSB.Log.Add("SPE_MEMBRE_ILLISIBLE", { detail = tostring(members[guid].name) .. " classe=" .. tostring(members[guid].classID), global = true })
+    local roles = FSB.SpecEngine.Choices(nil, members[guid].classFile, nil, FSB.Classes.ROLES, FSB.Profiles.List())
+    if #roles ~= 1 then
+        FSB.Log.Add("ROLE_MEMBRE_AMBIGU", { detail = tostring(members[guid].name) .. " classe=" .. tostring(members[guid].classFile), global = true })
     end
     FSB.Analyzer.InvalidateGroup()
 end
@@ -187,16 +188,14 @@ end
 -- Accès pour l'analyse
 ---------------------------------------------------------------------------------------------
 
--- Membres comparables : spé connue ET profil déterminé ET équipement lu. Sinon exclus
--- (aucune donnée inventée).
+-- Forever n'expose qu'une spécialisation par classe : le rôle d'un autre joueur n'est pas lisible.
+-- Un membre n'est comparable que si sa CLASSE n'a qu'un seul rôle possible (mage, voleur...) ;
+-- sinon (prêtre, druide, paladin...) il est exclu : aucune spé ni rôle inventé.
 function Inspector.GetComparableMembers()
     local list = {}
-    local profiles = FSB.Profiles.List()
     for _, m in pairs(members) do
-        if m.specID then
-            local profile = FSB.SpecEngine.ProfileForSpec(m.specID, FSB.Spec.Info(m.specID), profiles, nil)
-            if profile then list[#list + 1] = { name = m.name, weights = profile.weights, equipped = m.equipped } end
-        end
+        local roles = FSB.SpecEngine.Choices(nil, m.classFile, nil, FSB.Classes.ROLES, FSB.Profiles.List())
+        if #roles == 1 then list[#list + 1] = { name = m.name, weights = roles[1].weights, equipped = m.equipped } end
     end
     return list
 end

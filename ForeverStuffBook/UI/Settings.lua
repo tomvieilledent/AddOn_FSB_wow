@@ -5,14 +5,11 @@ local _, FSB = ...
 local UI = {}
 FSB.UI = UI
 
-local WIDTH, HEIGHT = 440, 620
+local WIDTH, HEIGHT = 440, 540
 local frame
-local editingName -- profil dont on édite les poids (le profil actif reste choisi par la spé)
-local profileButtons, weightBoxes, thresholdBoxes = {}, {}, {}
+local weightBoxes, thresholdBoxes = {}, {}
 
-local function Editing()
-    return (editingName and FSB.Profiles.Find(editingName)) or FSB.Profiles.GetActive()
-end
+local function Editing() return FSB.Profiles.GetActive() end
 
 local function Label(parent, text, x, y, template)
     local fs = parent:CreateFontString(nil, "OVERLAY", template or "GameFontNormalSmall")
@@ -67,30 +64,12 @@ end
 function UI.Refresh()
     if not frame then return end
     frame.enabled:Refresh(); frame.icons:Refresh(); frame.details:Refresh()
-    local specID = FSB.Spec.Current()
-    local info = specID and FSB.Spec.Info(specID)
-    frame.status:SetText(FSB.L.UI_STATUS:format((info and info.name) or "?", FSB.db.activeProfile))
-    local editing = Editing()
+    frame.status:SetText(FSB.L.UI_STATUS:format(FSB.Spec.Label()))
+    
 
-    local profiles = FSB.Profiles.List()
-    for i = 1, #profileButtons do profileButtons[i]:Hide() end
-    for i, p in ipairs(profiles) do
-        local b = profileButtons[i]
-        if not b then
-            b = Button(frame, "", 100, 0, 0, nil)
-            profileButtons[i] = b
-        end
-        b:ClearAllPoints()
-        b:SetPoint("TOPLEFT", 16 + ((i - 1) % 4) * 104, -118 - math.floor((i - 1) / 4) * 24)
-        b:SetText((p.name == FSB.db.activeProfile and "* " or "") .. p.name)
-        b:SetEnabled(p ~= editing)
-        b:SetScript("OnClick", function() editingName = p.name; UI.Refresh() end)
-        b:Show()
-    end
-
-    local active = editing
+    local active = Editing()
     for _, row in ipairs(weightBoxes) do
-        row.box:SetText(active.weights[row.key] and tostring(active.weights[row.key]) or "")
+        row.box:SetText(active.weights[row.key] and tostring(active.weights[row.key]) or "-")
     end
     thresholdBoxes.upgrade:SetText(tostring(math.floor(Threshold("upgradeRel") * 100 + 0.5)))
     thresholdBoxes.margin:SetText(tostring(math.floor(Threshold("otherMargin") * 100 + 0.5)))
@@ -108,10 +87,8 @@ local function BuildWeights(parent, top)
         local col, row = (i - 1) % 2, math.floor((i - 1) / 2)
         local x, y = 16 + col * 210, top - 22 - row * 22
         Label(parent, s.label, x, y - 4)
-        local box = NumberBox(parent, x + 120, y, 60, function(value)
-            FSB.Profiles.SetWeight(Editing(), s.key, value)
-        end)
-        weightBoxes[#weightBoxes + 1] = { key = s.key, box = box }
+        local value = Label(parent, "", x + 130, y - 4, "GameFontHighlightSmall")
+        weightBoxes[#weightBoxes + 1] = { key = s.key, box = value }
     end
     return top - 22 - math.ceil(#FSB.Stats.KEYS / 2) * 22
 end
@@ -156,19 +133,7 @@ local function Build()
     frame.status = Label(frame, "", 16, -68, "GameFontHighlightSmall")
     Button(frame, L.UI_PICK_ROLE, 130, 290, -62, function() UI.ShowRolePicker(true) end)
 
-    Label(frame, L.UI_PROFILES, 16, -98, "GameFontNormal")
-    -- les boutons de profil sont créés dans Refresh (zone y = -118 à -190)
-
-    local nameBox = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
-    nameBox:SetSize(150, 20); nameBox:SetPoint("TOPLEFT", 22, -196); nameBox:SetAutoFocus(false)
-    Button(frame, L.UI_NEW, 70, 180, -195, function()
-        local name = nameBox:GetText()
-        if FSB.Profiles.Create(name, Editing()) then nameBox:SetText("") end
-        UI.Refresh()
-    end)
-    Button(frame, L.UI_DELETE, 90, 254, -195, function() if FSB.Profiles.Delete(Editing().name) then editingName = nil end; UI.Refresh() end)
-
-    local y = BuildWeights(frame, -228)
+    local y = BuildWeights(frame, -98)
     BuildThresholds(frame, y - 10)
     frame:Hide()
 end

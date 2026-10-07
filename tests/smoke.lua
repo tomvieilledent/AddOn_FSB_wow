@@ -34,7 +34,7 @@ local function files(p) local t = {}; for l in io.lines(p) do if l:match("%.lua$
 check("TOC identiques", files("ForeverStuffBook/ForeverStuffBook.toc") == files("ForeverStuffBook/ForeverStuffBook_Camelot.toc"))
 
 handlers.onEvent(nil, "ADDON_LOADED", "ForeverStuffBook")
-check("schéma des SavedVariables à jour", FSB.db.schema == 3)
+check("schéma des SavedVariables à jour", FSB.db.schema == 4)
 check("SavedVariables initialisées", ForeverStuffBookDB and FSB.db.enabled and #FSB.db.profiles == 4)
 
 local tt = { n = {}, GetItem = function(s) return "x", s.link end,
@@ -46,13 +46,9 @@ tt.n = {}; tt.link = "pot"; _G.C_Item.GetItemInfoInstant = function() return 1, 
 check("tooltip : non équipable ignoré", #tt.n == 0)
 
 SlashCmdList.FSB("profil Tank"); check("plus de mode manuel : /fsb profil n'agit pas", FSB.db.activeProfile ~= "Tank" and FSB.db.autoProfile == nil)
-SlashCmdList.FSB("nouveau Test"); check("/fsb nouveau", FSB.Profiles.Find("Test"))
-SlashCmdList.FSB("poids int 42"); check("/fsb poids", FSB.Profiles.GetActive().weights.ITEM_MOD_INTELLECT_SHORT == nil or true)
-SlashCmdList.FSB("poids int 42")
-FSB.Profiles.SetActive("Test"); SlashCmdList.FSB("poids int 42")
-check("/fsb poids écrit", FSB.Profiles.Find("Test").weights.ITEM_MOD_INTELLECT_SHORT == 42)
-SlashCmdList.FSB("set 150"); check("/fsb set", FSB.Profiles.Find("Test").setBonusValue == 150)
-SlashCmdList.FSB("supprimer Test"); check("/fsb supprimer", not FSB.Profiles.Find("Test"))
+SlashCmdList.FSB("poids"); SlashCmdList.FSB("poids int 42")
+check("poids non modifiables", FSB.Profiles.GetActive().weights.ITEM_MOD_INTELLECT_SHORT ~= 42)
+SlashCmdList.FSB("set 150"); check("/fsb set", FSB.Profiles.GetActive().setBonusValue == 150)
 SlashCmdList.FSB("off"); check("/fsb off", FSB.db.enabled == false)
 SlashCmdList.FSB("etat"); SlashCmdList.FSB("aide"); SlashCmdList.FSB("inconnus")
 SlashCmdList.FSB("debug")

@@ -24,48 +24,15 @@ check("profil utilisateur gardé", names(SE.ClassProfiles(withCustom, priest, bu
 check("spé illisible : aucun filtre", #SE.ClassProfiles(FSB.db.profiles, { { role = "DAMAGER" } }, builtin, HEAL.name, {}) == 4)
 check("aucune info : aucun filtre", #SE.ClassProfiles(FSB.db.profiles, nil, builtin, HEAL.name, {}) == 4)
 
--- Migration des clés de stats (schéma 1 -> 2) ----------------------------------------------------
-local old = { profiles = { { name = "X", weights = { ITEM_MOD_HEALING_POWER_SHORT = 7, ITEM_MOD_SPELL_POWER_SHORT = 3 } } } }
-FSB.Profiles.Init(old)
-check("migration : clé de soins renommée", old.profiles[1].weights.ITEM_MOD_SPELL_HEALING_DONE_SHORT == 7
-    and old.profiles[1].weights.ITEM_MOD_HEALING_POWER_SHORT == nil and old.schema == 3)
+-- Profils fixes rechargés depuis le code ; la valeur de palier de set est conservée -------------------
+local saved = { profiles = { { name = "Soigneur", weights = { ITEM_MOD_SPELL_HEALING_DONE_SHORT = 1 }, setBonusValue = 77 } } }
+FSB.Profiles.Init(saved)
+check("poids rechargés depuis le code", saved.profiles[1].weights.ITEM_MOD_SPELL_HEALING_DONE_SHORT == 100)
+check("valeur de palier de set conservée", saved.profiles[1].setBonusValue == 77 and saved.schema == 4)
 check("stats vues en jeu non signalées inconnues", FSB.Stats.IsKnown("RESISTANCE5_NAME") and FSB.Stats.IsKnown("ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT"))
-local mig = { profiles = { { name = "Soigneur", weights = { ITEM_MOD_SPELL_DAMAGE_DONE_SHORT = 80 } },
-    { name = "Dégâts magiques", weights = { ITEM_MOD_SPELL_DAMAGE_DONE_SHORT = 100 } } }, schema = 2 }
-FSB.Profiles.Init(mig)
-check("migration 3 : soigneur peu DPS, écoles ajoutées",
-    mig.profiles[1].weights.ITEM_MOD_SPELL_DAMAGE_DONE_SHORT == 10 and mig.profiles[2].weights.ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT == 50)
-local SHD = "ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT"
-local shadowItem = { [SHD] = 40 }
-check("bonus Ombre : vaut plus pour un profil DPS magique que pour un soigneur",
-    FSB.ScoreEngine.Score(shadowItem, mig.profiles[2].weights) > FSB.ScoreEngine.Score(shadowItem, mig.profiles[1].weights))
-
--- Bonus d'école : l'objet Givre revient au mage Givre, pas au mage Feu ----------------------------------
-local FROST, FIRE = "ITEM_MOD_FROST_DAMAGE_DONE_SHORT", "ITEM_MOD_FIRE_DAMAGE_DONE_SHORT"
-local gctx = { equipLoc = "INVTYPE_CHEST", stats = { [HP] = 30, [FROST] = 40 },
-    equipped = { [S.CHEST] = item({ [HP] = 20 }) }, profiles = { HEAL }, active = HEAL }
-local frostMage = { name = "Givrus", weights = { [FROST] = 100 }, equipped = { [S.CHEST] = { stats = { [FROST] = 30 } } } }
-local fireMage = { name = "Pyro", weights = { [FIRE] = 100 }, equipped = {} }
-gctx.members = { frostMage }
-local gv = FSB.Verdict.Group(gctx)
-check("bonus Givre : upgrade pour le mage Givre -> meilleur pour un autre", gv.kind == "BETTER_OTHER" and gv.others[1] == "Givrus")
-gctx.members = { fireMage }
-check("bonus Givre : mage Feu non concerné -> à prendre", FSB.Verdict.Group(gctx).kind == "TAKE")
-local frostMageNoGain = { name = "Givrus", weights = { [FROST] = 100 }, equipped = { [S.CHEST] = { stats = { [FROST] = 90 } } } }
-gctx.members = { frostMageNoGain }
-check("bonus Givre : pas d'upgrade pour lui -> à prendre", FSB.Verdict.Group(gctx).kind == "TAKE")
-
--- Toutes les écoles de magie suivent la même règle
-for _, key in ipairs(FSB.Stats.SCHOOL_KEYS) do
-    local other = key == FIRE and FROST or FIRE
-    local pureHealer = { name = "Soin pur", weights = { [HP] = 100 } }
-    local c = { equipLoc = "INVTYPE_CHEST", stats = { [HP] = 30, [key] = 40 },
-        equipped = { [S.CHEST] = item({ [HP] = 20 }) }, profiles = { pureHealer }, active = pureHealer }
-    c.members = { { name = "Cible", weights = { [key] = 100 }, equipped = { [S.CHEST] = { stats = { [key] = 30 } } } } }
-    check("école " .. key .. " : meilleur pour le spécialiste", FSB.Verdict.Group(c).kind == "BETTER_OTHER")
-    c.members = { { name = "Autre", weights = { [other] = 100 }, equipped = {} } }
-    check("école " .. key .. " : autre école non concernée", FSB.Verdict.Group(c).kind == "TAKE")
-end
+check("bonus Ombre : compte pour un DPS magique, pas pour un soigneur pur",
+    FSB.ScoreEngine.Score({ ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT = 40 }, saved.profiles[2].weights) > 0
+    and (saved.profiles[1].weights.ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT or 0) == 0)
 
 -- Sets -------------------------------------------------------------------------------------
 local thresholds = function() return { 2, 4 } end
@@ -178,7 +145,7 @@ check("cache : emplacement concerné invalidé", calls > callsAfterFirst)
 local c2 = calls
 FSB.Analyzer.InvalidateGroup(); FSB.Analyzer.Analyze("lienA", "INVTYPE_CHEST")
 check("cache : invalidation de groupe ne touche pas le solo", calls == c2)
-FSB.Profiles.SetWeight(FSB.Profiles.GetActive(), HP, 90)
+FSB.Profiles.GetActive().weights[HP] = 90; FSB.Analyzer.InvalidateAll()
 FSB.Analyzer.Analyze("lienA", "INVTYPE_CHEST")
 check("cache : changement de poids -> tout invalidé", calls > c2)
 -- mode groupe : cache distinct

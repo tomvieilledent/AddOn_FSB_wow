@@ -39,4 +39,9 @@ Addon passif : aucune action de jeu, aucune simulation d'entrée, aucune API pro
   `ITEM_MOD_*_RESISTANCE_SHORT`, `RESISTANCE3/5/6_NAME`, `ITEM_MOD_HEALTH_REGEN_SHORT`.
   `ITEM_MOD_HEALING_POWER_SHORT` et `ITEM_MOD_SPELL_POWER_SHORT` : jamais observées (supprimées du code).
 - Stat principale d'une spé : intelligence = 4.
-- Spé détectée du prêtre : id 1487, `role=DAMAGER` pour un soigneur : **CONFLICTING** avec la réalité. Spés de la classe : à lire via `/fsb etat`.
+- **Une seule spécialisation par classe** (VERIFIED, `/fsb specs`) : Guerrier 1491, Paladin 1486, Chasseur 1485, Voleur 1488,
+  Prêtre 1487, Chaman 1489, Mage 1482, Démoniste 1490, Druide 1484. Toutes `role=DAMAGER` (placeholder). Rôle de groupe : `NONE`.
+  Conséquence : l'API ne donne que la CLASSE. Sacré/Discipline/Ombre, Givre/Feu, Féral tank/dps ne sont pas lisibles par la spé.
+- `GetNumTalentTabs`/`GetTalentInfo` : absents ou non listés par `/fsb etat` (à confirmer via la sonde de talents).
+- Conséquences produit : rôle du joueur = question en cas de doute (mémorisée) ; autre joueur comparable seulement si sa classe n'a
+  qu'un rôle ; spé réelle (arbre de talents) = IMPOSSIBLE tant qu'aucune API de talents n'est confirmée.

@@ -148,6 +148,21 @@ function Probe.Specs(add)
         local ok, r = pcall(function() return pack(GetSpecializationInfoForSpecID(current)) end)
         add("GetSpecializationInfoForSpecID(" .. current .. ") : " .. (ok and show(r) or "erreur"))
     end
+    -- Découverte des API de talents réellement présentes (noms uniquement, lecture seule).
+    local found = {}
+    for k, v in pairs(_G) do
+        if type(v) == "function" and type(k) == "string" and k:find("Talent") then found[#found + 1] = k end
+    end
+    table.sort(found)
+    add("fonctions globales *Talent* : " .. (#found > 0 and table.concat(found, ", ") or "aucune"))
+    for _, ns in ipairs({ "C_ClassTalents", "C_Traits", "C_SpecializationInfo" }) do
+        local t, names = _G[ns], {}
+        if type(t) == "table" then for k, v in pairs(t) do if type(v) == "function" then names[#names + 1] = k end end end
+        table.sort(names)
+        add(ns .. " : " .. (type(t) == "table" and table.concat(names, ", ") or "absent"))
+    end
+    local okC, configID = pcall(function() return C_ClassTalents.GetActiveConfigID() end)
+    add("config de talents active : " .. tostring(okC and configID))
     if GetNumTalentTabs then
         local okT, tabs = pcall(GetNumTalentTabs)
         add("onglets de talents : " .. tostring(okT and tabs))

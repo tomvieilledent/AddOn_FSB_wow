@@ -115,3 +115,11 @@ function Spec.OffspecProfiles()
     return FSB.SpecEngine.FilterByNames(FSB.Profiles.List(), names, FSB.Profiles.IsBuiltin,
         FSB.db.activeProfile, FSB.db.specChoice)
 end
+
+-- Libellé de la spé active : « Prêtre · Soigneur ». Forever n'expose qu'une spé par classe : le nom vient
+-- de l'API, le rôle du profil actif (choix mémorisé). Les écoles/arbres de talents ne sont pas encore lus.
+function Spec.Label()
+    local specID = Spec.Current()
+    local info = specID and SpecInfo(specID)
+    return (info and info.name) or "?", FSB.db.activeProfile or "?"
+end

@@ -89,38 +89,15 @@ function Commands.off() FSB.db.enabled = false; Print(FSB.L.DISABLED) end
 
 function Commands.aide() FSB.Utils.Report(FSB.L.HELP) end
 
-function Commands.profils()
-    local lines = {}
-    for _, p in ipairs(FSB.Profiles.List()) do
-        lines[#lines + 1] = p.name .. (p.name == FSB.db.activeProfile and " *" or "")
+-- Poids du profil actif, à titre indicatif (non modifiables).
+function Commands.poids()
+    local profile = FSB.Profiles.GetActive()
+    local lines = { profile.name .. " (poids fixes, indicatifs)" }
+    for _, s in ipairs(FSB.Stats.KEYS) do
+        local w = profile.weights[s.key]
+        if w then lines[#lines + 1] = ("%s = %s"):format(s.label, w) end
     end
     FSB.Utils.Report(lines)
-end
-
-function Commands.nouveau(rest)
-    if FSB.Profiles.Create(rest) then Print(FSB.L.PROFILE_CREATED:format(rest)) else Print(FSB.L.PROFILE_EXISTS:format(rest)) end
-end
-
-function Commands.supprimer(rest)
-    if not FSB.Profiles.Find(rest) then return Print(FSB.L.PROFILE_UNKNOWN:format(rest)) end
-    if FSB.Profiles.Delete(rest) then Print(FSB.L.PROFILE_DELETED:format(rest)) else Print(FSB.L.PROFILE_KEEP_ONE) end
-end
-
-function Commands.poids(rest)
-    local profile = FSB.Profiles.GetActive()
-    local alias, value = rest:match("^(%S+)%s+(%-?[%d%.]+)$")
-    if not alias then
-        local lines = {}
-        for _, s in ipairs(FSB.Stats.KEYS) do
-            local w = profile.weights[s.key]
-            if w then lines[#lines + 1] = ("%s (%s) = %s"):format(s.label, s.alias, w) end
-        end
-        return FSB.Utils.Report(lines)
-    end
-    local key = FSB.Stats.FromAlias(alias)
-    if not key then return Print(FSB.L.STAT_UNKNOWN:format(alias)) end
-    FSB.Profiles.SetWeight(profile, key, tonumber(value))
-    Print(FSB.L.WEIGHT_SET:format(FSB.Stats.Label(key), value, profile.name))
 end
 
 function Commands.set(rest)

@@ -19,7 +19,7 @@ _G.UnitIsVisible = function(u) return world.group[u].visible end
 _G.UnitIsUnit = function(u, v) return u == v end
 _G.UnitGUID = function(u) return u == "player" and "G-me" or (world.group[u] and world.group[u].guid) end
 _G.UnitName = function(u) return world.group[u].name end
-_G.UnitClass = function(u) return "Cls", "CLS", 5 end
+_G.UnitClass = function(u) return "Cls", (world.group[u] and world.group[u].classFile) or "MAGE", 8 end
 _G.C_Map = { GetBestMapForUnit = function(u) return u == "player" and world.myMap or world.group[u].map end }
 _G.CanInspect = function(u) return true end
 _G.NotifyInspect = function(u) notified[#notified + 1] = u; world.lastNotified = u end
@@ -28,7 +28,7 @@ _G.GetInventoryItemLink = function(u, slot) local g = world.group[u].gear; retur
 _G.C_SpecializationInfo = { GetInspectSpecialization = function(u) return world.group[u].specID or 0 end }
 _G.C_Timer = { NewTicker = function(_, fn) ticker = { fn = fn, cancelled = false, Cancel = function(self) self.cancelled = true end }; return ticker end }
 
-local FSB = H.load{ "Localization/frFR", "Utils/Utils", "Data/Stats", "Data/Profiles", "Core/Context", "Core/Log",
+local FSB = H.load{ "Localization/frFR", "Utils/Utils", "Data/Stats", "Data/Profiles", "Data/Classes", "Core/Context", "Core/Log",
     "Engine/SpecEngine", "Core/Compat", "Core/Spec" }
 FSB.db = { specProfiles = {} }; FSB.Profiles.Init(FSB.db)
 local invalidations = 0
@@ -115,7 +115,9 @@ world.group = {}; I.Reset()
 check("groupe dissous : cache vidé", #I.GetComparableMembers() == 0 and I.CountPending() == 0)
 
 -- Membre sans spé lisible : non comparable
-world.inInstance = true; member(1, { specID = 0 }); refresh(); scanAll(3)
-check("spé illisible : pas de comparaison", #I.GetComparableMembers() == 0)
+world.inInstance = true; member(1, { classFile = "PRIEST" }); refresh(); scanAll(3)
+check("classe à plusieurs rôles : pas de comparaison (rôle illisible)", #I.GetComparableMembers() == 0)
+world.group = {}; I.Reset(); member(1, { classFile = "MAGE" }); refresh(); scanAll(3)
+check("classe à un seul rôle : comparable", #I.GetComparableMembers() == 1)
 
 T.finish("inspector")

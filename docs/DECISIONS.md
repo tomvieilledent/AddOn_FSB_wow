@@ -24,3 +24,9 @@ Context: le cahier des charges §13 définit 🟡 comme « utile au joueur » + 
 Problem: première lecture de l'audit jugeait `Verdict.Group` incorrect.
 Decision: `Verdict.Group` conforme, conservé.
 Consequences: aucune réécriture.
+
+## Pas de mode manuel, poids fixes
+Date: 2026-10-07
+Context: demande explicite de l'utilisateur ; Forever n'expose qu'une spé (= classe) par classe.
+Decision: profil actif = rôle de la classe (question une fois si plusieurs rôles), poids non modifiables, profils rechargés du code.
+Consequences: la spé réelle (arbre de talents) dépend d'une API de talents à confirmer ; autres joueurs comparés seulement si leur classe n'a qu'un rôle.

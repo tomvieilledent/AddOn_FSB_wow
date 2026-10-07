@@ -21,3 +21,5 @@ Next action : API SPECIALIST pour chaque ligne, après récupération de la sort
 | `UICheckButtonTemplate` : `.text` ou `.Text` | UI | Nom du champ | `/fsb` en erreur |
 | Suffixe `_Camelot.toc` | TOC | Utile à Forever ? | TOC superflu |
 | Classe/armure/arme équipables par le personnage | (absent) | Quelle API ? | Verdicts erronés |
+
+| API de talents (arbre, rang) du joueur et des autres | (absent) | Quelle API existe sur Forever ? (`/fsb etat` liste les fonctions *Talent*) | Pas de spé réelle ni de rôle des autres |
