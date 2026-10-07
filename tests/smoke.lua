@@ -37,7 +37,7 @@ handlers.onEvent(nil, "ADDON_LOADED", "ForeverStuffBook")
 check("SavedVariables initialisées", ForeverStuffBookDB and FSB.db.enabled and #FSB.db.profiles == 4)
 
 local tt = { n = {}, GetItem = function(s) return "x", s.link end,
-    AddLine = function(s, t) s.n[#s.n + 1] = t end, Show = function() end }
+    AddLine = function(s, t) s.n[#s.n + 1] = t end, AddDoubleLine = function(s, t) s.n[#s.n + 1] = t end, Show = function() end }
 tt.link = "ring"; hooks.tooltip(tt)
 check("tooltip : verdict affiché pour un anneau", #tt.n >= 3)
 check("stat inconnue enregistrée", FSB.db.unknownStats.ITEM_MOD_NEW_THING)
@@ -57,10 +57,16 @@ SlashCmdList.FSB("etat"); SlashCmdList.FSB("aide"); SlashCmdList.FSB("inconnus")
 SlashCmdList.FSB("sonde")
 check("/fsb sonde stocke un rapport", type(FSB.db.probe) == "table" and #FSB.db.probe > 10)
 local t2 = { n = {}, GetItem = function(s) return "x", "ring" end,
-    AddLine = function(s, t) s.n[#s.n + 1] = t end, Show = function() end }
+    AddLine = function(s, t) s.n[#s.n + 1] = t end, AddDoubleLine = function(s, t) s.n[#s.n + 1] = t end, Show = function() end }
 _G.C_Item.GetItemInfoInstant = function() return 1, "a", "b", "INVTYPE_FINGER" end
 FSB.db.enabled = true
 hooks.tooltip(t2); local first = #t2.n; hooks.tooltip(t2)
 check("tooltip : pas de doublon", first > 0 and #t2.n == first)
+check("verdict avec icône par défaut", t2.n[2] and t2.n[2]:find("|T", 1, true))
+FSB.db.display.icons = false; FSB.db.display.details = false
+local t3 = { n = {}, GetItem = function() return "x", "ring" end,
+    AddLine = function(s, t) s.n[#s.n + 1] = t end, AddDoubleLine = function(s, t) s.n[#s.n + 1] = t end, Show = function() end }
+hooks.tooltip(t3)
+check("options : sans icône ni détails", #t3.n == 2 and not t3.n[2]:find("|T", 1, true))
 SlashCmdList.FSB("")
 T.finish("chargement")

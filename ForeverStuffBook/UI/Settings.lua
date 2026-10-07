@@ -61,7 +61,7 @@ end
 
 function UI.Refresh()
     if not frame then return end
-    frame.enabled:Refresh(); frame.auto:Refresh()
+    frame.enabled:Refresh(); frame.auto:Refresh(); frame.icons:Refresh(); frame.details:Refresh()
 
     local profiles = FSB.Profiles.List()
     for i = 1, #profileButtons do profileButtons[i]:Hide() end
@@ -137,6 +137,12 @@ local function Build()
 
     frame.enabled = Check(frame, L.UI_ENABLED, 12, -38,
         function() return FSB.db.enabled end, function(v) FSB.db.enabled = v end)
+    local function display(name)
+        return function() return FSB.db.display[name] ~= false end,
+            function(v) FSB.db.display[name] = v end
+    end
+    frame.icons = Check(frame, L.UI_ICONS, 190, -38, display("icons"))
+    frame.details = Check(frame, L.UI_DETAILS, 290, -38, display("details"))
     frame.auto = Check(frame, L.UI_AUTO, 12, -62, function() return FSB.db.autoProfile end,
         function(v) FSB.db.autoProfile = v; if v then FSB.Spec.Apply() end; UI.Refresh() end)
     Button(frame, L.UI_PICK_SPEC, 130, 290, -62, function() UI.ShowSpecPicker() end)

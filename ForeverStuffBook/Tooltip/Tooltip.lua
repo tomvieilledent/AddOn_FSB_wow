@@ -15,20 +15,39 @@ local TEXT_KEY = {
     OFFSPEC = "VERDICT_OFFSPEC", SELL = "VERDICT_SELL", CUPI = "VERDICT_CUPI",
 }
 local GREY = { 0.7, 0.7, 0.7 }
+local GOLD = { 1.0, 0.82, 0.0 }
+
+-- Icônes standard du jeu (contrôle de disponibilité). Facultatives : option « Icônes ».
+local ICON_PATH = "Interface\\RaidFrame\\ReadyCheck-"
+local ICON = {
+    EQUIP = "Ready", TAKE = "Ready", BETTER_OTHER = "Waiting", SELL = "NotReady", CUPI = "NotReady",
+}
+
+-- Option d'affichage : active par défaut tant que l'utilisateur ne l'a pas désactivée.
+local function Option(name)
+    local d = FSB.db and FSB.db.display
+    return d == nil or d[name] ~= false
+end
 
 local function VerdictText(verdict)
     local text = FSB.L[TEXT_KEY[verdict.kind]]
     if verdict.kind == "OFFSPEC" then text = text .. " — " .. verdict.profile end
+    local icon = ICON[verdict.kind]
+    if Option("icons") then
+        text = (icon and ("|T" .. ICON_PATH .. icon .. ":16:16:0:0|t ") or "      ") .. text
+    end
     return text
 end
 
 local function AddDetails(tooltip, verdict)
     local L = FSB.L
+    local details = Option("details")
     if verdict.unusable then tooltip:AddLine(L.UNUSABLE, unpack(GREY)) end
     if verdict.reqLevel then tooltip:AddLine(L.REQ_LEVEL:format(verdict.reqLevel), 1, 0.6, 0.2) end
     if verdict.kind == "BETTER_OTHER" then
         tooltip:AddLine(L.BETTER_FOR:format(table.concat(verdict.others, ", ")), 1, 1, 1)
     end
+    if not details then return end
     local set = verdict.setNote
     if set then
         if set.gained > 0 then tooltip:AddLine(L.SET_GAINED:format(set.gained) .. " " .. L.SET_UNVALUED, 0.6, 1, 0.6) end
@@ -38,6 +57,7 @@ local function AddDetails(tooltip, verdict)
     if verdict.unscanned and verdict.unscanned > 0 then
         tooltip:AddLine(L.UNSCANNED:format(verdict.unscanned), unpack(GREY))
     end
+    tooltip:AddLine(L.PROFILE .. " : " .. FSB.db.activeProfile, unpack(GREY))
 end
 
 local function AppendAnalysis(tooltip)
@@ -56,12 +76,11 @@ local function AppendAnalysis(tooltip)
     local verdict = FSB.Analyzer.Analyze(link, equipLoc)
     if not verdict then return end
 
+    -- Un bloc : espace, ligne de verdict (couleur + icône) avec la marque FSB à droite, puis détails.
     local c = COLORS[verdict.kind]
     tooltip:AddLine(" ")
-    tooltip:AddLine(VerdictText(verdict), c[1], c[2], c[3])
+    tooltip:AddDoubleLine(VerdictText(verdict), FSB.L.ANALYSIS_TITLE, c[1], c[2], c[3], GOLD[1], GOLD[2], GOLD[3])
     AddDetails(tooltip, verdict)
-    tooltip:AddLine(FSB.L.PROFILE .. " : " .. FSB.db.activeProfile, unpack(GREY))
-    tooltip:AddLine(FSB.L.ANALYSIS_TITLE, 0.2, 1.0, 0.6)
     tooltip.fsbDone = true
     tooltip:Show() -- recalcule la taille du tooltip
 end

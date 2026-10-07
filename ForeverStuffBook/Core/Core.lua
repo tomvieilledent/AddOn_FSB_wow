@@ -3,7 +3,7 @@ local ADDON, FSB = ...
 FSB.name = ADDON
 local defaults = {
     enabled = true, autoProfile = true, specPromptDone = false,
-    unknownStats = {}, specProfiles = {},
+    unknownStats = {}, specProfiles = {}, display = {},
     -- thresholds : nil = valeurs par défaut du VerdictEngine
 }
 
