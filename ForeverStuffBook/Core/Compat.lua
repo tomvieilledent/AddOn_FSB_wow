@@ -5,14 +5,67 @@ local _, FSB = ...
 local Compat = {}
 FSB.Compat = Compat
 
--- Statistiques d'un objet : table { [clé] = valeur numérique } ou nil.
+-- MP5 lu dans le texte du tooltip, pour les objets dont la ligne « Rend N points de mana toutes les 5 s » n'est pas
+-- dans les stats de l'API. Certaines lignes sont affichées avec un code non résolu par le jeu
+-- (ex. « Rend 5 $|point:points: toutes les 5s ») : le nombre reste lisible, on le lit quand même.
+-- Source du libellé : ITEM_MOD_MANA_REGENERATION (texte localisé du jeu). UNVERIFIED : voir /fsb debug.
+local MP5_KEY = "ITEM_MOD_MANA_REGENERATION_SHORT"
+
+local function ManaRegenPattern()
+    local fmt = _G.ITEM_MOD_MANA_REGENERATION
+    if type(fmt) ~= "string" then return nil, nil end
+    local prefix = fmt:match("^(.-)%%d")
+    if not prefix or prefix == "" then return nil, nil end
+    local escaped = prefix:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%0")
+    return "^%s*" .. escaped .. "%s*(%d+)", fmt
+end
+
+function Compat.ParseManaRegen(text)
+    local prefixPattern, fmt = ManaRegenPattern()
+    if not prefixPattern or type(text) ~= "string" then return nil end
+    local n = text:match(prefixPattern)
+    if not n then return nil end
+    -- Texte normal complet, ou texte « cassé » (code non résolu) qui mentionne bien « 5 s ».
+    local full = fmt:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%0"):gsub("%%%%d", "%%d+")
+    if text:match("^%s*" .. full) or ((text:find("$|", 1, true) or text:find("|", 1, true)) and text:match("%f[%d]5%s*s")) then
+        return tonumber(n)
+    end
+end
+
+local function TextStats(link)
+    if not C_TooltipInfo or not C_TooltipInfo.GetHyperlink then return nil end
+    local ok, data = pcall(C_TooltipInfo.GetHyperlink, link)
+    if not ok or type(data) ~= "table" or type(data.lines) ~= "table" then return nil end
+    for _, line in ipairs(data.lines) do
+        local text = line.leftText
+        if type(text) == "string" then
+            local mp5 = Compat.ParseManaRegen(text)
+            if mp5 then return { [MP5_KEY] = mp5 } end
+        end
+    end
+end
+
+-- Statistiques d'un objet : table { [clé] = valeur numérique } ou nil. Complétées par le MP5 du texte si absent de l'API.
+-- Le résultat est mis en cache par lien (les stats d'un lien ne changent pas).
+local statsCache, statsCount = {}, 0
+
 function Compat.GetStats(link)
     if not link or not C_Item or not C_Item.GetItemStats then return nil end
+    if statsCache[link] then return statsCache[link] end
     local ok, raw = pcall(C_Item.GetItemStats, link)
     if not ok or type(raw) ~= "table" then return nil end
     local stats = {}
     for key, value in pairs(raw) do
         if type(value) == "number" then stats[key] = value end
+    end
+    if stats[MP5_KEY] == nil then
+        local extra = TextStats(link)
+        if extra then stats[MP5_KEY] = extra[MP5_KEY] end
+    end
+    -- Pas de cache si rien n'est lu : l'objet n'est peut-être pas encore chargé côté client.
+    if next(stats) then
+        if statsCount >= 500 then statsCache, statsCount = {}, 0 end
+        statsCache[link], statsCount = stats, statsCount + 1
     end
     return stats
 end
