@@ -125,6 +125,21 @@ end
 
 -- /fsb etat : liste brute des spécialisations de la classe et de la spé détectée.
 function Probe.Specs(add)
+    -- Verdict de lecture des talents (ce que FSB utilise réellement pour trouver la spé).
+    if not GetNumTalentTabs or not GetTalentTabInfo then
+        add("LECTURE DES TALENTS : impossible — GetNumTalentTabs/GetTalentTabInfo absents (" ..
+            tostring(GetNumTalentTabs ~= nil) .. "/" .. tostring(GetTalentTabInfo ~= nil) .. ")")
+    else
+        local trees = FSB.Spec.ReadTrees()
+        if not trees then
+            add("LECTURE DES TALENTS : impossible — format de GetTalentTabInfo non reconnu (voir onglets ci-dessous)")
+        else
+            local parts = {}
+            for i, t in ipairs(trees) do parts[i] = tostring(t.name) .. "=" .. t.points end
+            local idx, name = FSB.Spec.ActiveTree()
+            add("LECTURE DES TALENTS : " .. table.concat(parts, ", ") .. " -> arbre actif : " .. tostring(name or "aucun/égalité"))
+        end
+    end
     local function pack(...) return { n = select("#", ...), ... } end
     local function show(t)
         local out = {}
