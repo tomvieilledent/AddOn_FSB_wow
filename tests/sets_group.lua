@@ -34,6 +34,13 @@ check("bonus Ombre : compte pour un DPS magique, pas pour un soigneur pur",
     FSB.ScoreEngine.Score({ ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT = 40 }, saved.profiles[2].weights) > 0
     and (saved.profiles[1].weights.ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT or 0) == 0)
 
+-- Stats vues en jeu : puissance des sorts (soins + dégâts) et DPS d'arme
+check("SPELL_POWER et DPS d'arme reconnus", FSB.Stats.IsKnown("ITEM_MOD_SPELL_POWER_SHORT") and FSB.Stats.IsKnown("ITEM_MOD_DAMAGE_PER_SECOND_SHORT"))
+check("puissance des sorts compte pour un soigneur", FSB.ScoreEngine.Score({ ITEM_MOD_SPELL_POWER_SHORT = 20 }, HEAL.weights) > 0)
+check("DPS d'arme : compte pour le physique, pas pour un soigneur",
+    FSB.ScoreEngine.Score({ ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 30 }, PHYS.weights) > 0
+    and FSB.ScoreEngine.Score({ ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 30 }, HEAL.weights) == 0)
+
 -- Sets -------------------------------------------------------------------------------------
 local thresholds = function() return { 2, 4 } end
 local eq = { [S.HEAD] = item({}, 7), [S.CHEST] = item({}, 7), [S.LEGS] = item({}, 7), [S.HANDS] = item({}, 9) }

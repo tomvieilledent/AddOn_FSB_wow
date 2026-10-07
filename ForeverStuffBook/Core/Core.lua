@@ -150,6 +150,7 @@ function Commands.etat()
         tostring(info and info.role), tostring(info and info.primaryStat)))
     add(FSB.L.LOG_COUNT:format(FSB.Log.Count()))
     FSB.Probe.Specs(add)
+    FSB.Probe.Traits(add)
     local names = {}
     for _, p in ipairs(FSB.Spec.OffspecProfiles()) do names[#names + 1] = p.name end
     add("Profils testés pour OFF-SPÉ : " .. table.concat(names, ", "))

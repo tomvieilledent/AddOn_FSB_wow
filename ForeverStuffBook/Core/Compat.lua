@@ -14,7 +14,7 @@ local MP5_KEY = "ITEM_MOD_MANA_REGENERATION_SHORT"
 local function ManaRegenPattern()
     local fmt = _G.ITEM_MOD_MANA_REGENERATION
     if type(fmt) ~= "string" then return nil, nil end
-    local prefix = fmt:match("^(.-)%%d")
+    local prefix = fmt:match("^(.-)%%[ds]") -- le jeu utilise %s (vu en jeu) ou %d
     if not prefix or prefix == "" then return nil, nil end
     local escaped = prefix:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%0")
     return "^%s*" .. escaped .. "%s*(%d+)", fmt
@@ -26,7 +26,7 @@ function Compat.ParseManaRegen(text)
     local n = text:match(prefixPattern)
     if not n then return nil end
     -- Texte normal complet, ou texte « cassé » (code non résolu) qui mentionne bien « 5 s ».
-    local full = fmt:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%0"):gsub("%%%%d", "%%d+")
+    local full = fmt:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%0"):gsub("%%%%[ds]", "%%d+")
     if text:match("^%s*" .. full) or ((text:find("$|", 1, true) or text:find("|", 1, true)) and text:match("%f[%d]5%s*s")) then
         return tonumber(n)
     end

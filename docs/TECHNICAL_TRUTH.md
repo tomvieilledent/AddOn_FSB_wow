@@ -45,3 +45,9 @@ Addon passif : aucune action de jeu, aucune simulation d'entrée, aucune API pro
 - `GetNumTalentTabs`/`GetTalentInfo` : absents ou non listés par `/fsb etat` (à confirmer via la sonde de talents).
 - Conséquences produit : rôle du joueur = question en cas de doute (mémorisée) ; autre joueur comparable seulement si sa classe n'a
   qu'un rôle ; spé réelle (arbre de talents) = IMPOSSIBLE tant qu'aucune API de talents n'est confirmée.
+
+## Talents et stats (VERIFIED, 2026-10-07)
+- Talents : système moderne présent (`C_ClassTalents.GetActiveConfigID` = 11051557, `C_Traits.GetConfigInfo/GetTreeNodes/GetNodeInfo/GetEntryInfo/GetDefinitionInfo`, `GenerateInspectImportString`, `HasValidInspectData`). Ancien système (`GetNumTalentTabs`, `GetTalentTabInfo`) : absent.
+- Clés de stats supplémentaires : `ITEM_MOD_SPELL_POWER_SHORT` (soins + dégâts), `ITEM_MOD_DAMAGE_PER_SECOND_SHORT` (DPS d'arme).
+- Libellé du jeu `ITEM_MOD_MANA_REGENERATION` = « Rend %s points de mana toutes les 5 secondes. » (%s, pas %d).
+- Les noms de sorts des talents achetés (`/fsb etat`, lignes TRAITS) restent à lire pour relier l'arbre à Sacré/Discipline/Ombre : UNVERIFIED.

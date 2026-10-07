@@ -45,9 +45,9 @@ FSB.Compat.GetStats = function(l) if l == "porte" then return nil end return rea
 FSB.Analyzer.InvalidateAll()
 check("pièce portée illisible : pas de verdict d'équipement", FSB.Analyzer.Analyze("usable", ring).kind == "UNKNOWN")
 -- MP5 lu dans le texte (y compris ligne cassée du jeu)
-_G.ITEM_MOD_MANA_REGENERATION = "Rend %d points de mana toutes les 5 s."
+_G.ITEM_MOD_MANA_REGENERATION = "Rend %s points de mana toutes les 5 secondes."
 local P = FSB.Compat.ParseManaRegen
-check("MP5 : texte normal", P("Rend 5 points de mana toutes les 5 s.") == 5)
+check("MP5 : texte normal", P("Rend 5 points de mana toutes les 5 secondes.") == 5)
 check("MP5 : texte cassé du jeu", P("Rend 5 $|point:points: toutes les 5 s") == 5)
 check("MP5 : sans espace avant s", P("Rend 12 $|point:points: toutes les 5s") == 12)
 check("MP5 : autre ligne ignorée", P("Rend 5 points de vie toutes les 5 s.") == nil and P("Equipé : +5 Intelligence") == nil)

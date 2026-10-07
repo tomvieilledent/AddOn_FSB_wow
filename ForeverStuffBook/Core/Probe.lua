@@ -212,3 +212,54 @@ function Probe.AllSpecs()
     if FSB.db then FSB.db.allSpecs = lines end
     FSB.Utils.Report(lines)
 end
+
+-- Nœuds de talents achetés (système C_Traits) : sert à retrouver l'arbre/la spé réelle. Lecture seule.
+local function Keys(t)
+    local k = {}
+    if type(t) == "table" then for key in pairs(t) do k[#k + 1] = tostring(key) end end
+    table.sort(k)
+    return table.concat(k, ",")
+end
+
+local function EntryName(configID, entryID)
+    local okE, entry = pcall(function() return C_Traits.GetEntryInfo(configID, entryID) end)
+    if not okE or type(entry) ~= "table" or not entry.definitionID then return "?" end
+    local okD, def = pcall(function() return C_Traits.GetDefinitionInfo(entry.definitionID) end)
+    if not okD or type(def) ~= "table" then return "?" end
+    local name = def.overrideName
+    if not name and def.spellID then
+        local okN, n = pcall(function()
+            return (C_Spell and C_Spell.GetSpellName and C_Spell.GetSpellName(def.spellID))
+                or (GetSpellInfo and (GetSpellInfo(def.spellID)))
+        end)
+        name = okN and n or nil
+    end
+    return tostring(name or ("sort " .. tostring(def.spellID)))
+end
+
+function Probe.Traits(add)
+    local okC, configID = pcall(function() return C_ClassTalents.GetActiveConfigID() end)
+    if not okC or not configID then return add("TRAITS : pas de configuration active") end
+    local okI, cfg = pcall(function() return C_Traits.GetConfigInfo(configID) end)
+    if not okI or type(cfg) ~= "table" then return add("TRAITS : GetConfigInfo illisible") end
+    add("TRAITS config " .. configID .. " champs=" .. Keys(cfg))
+    local trees = cfg.treeIDs or {}
+    add("TRAITS arbres : " .. table.concat(trees, ","))
+    local shown = 0
+    for _, treeID in ipairs(trees) do
+        local okN, nodes = pcall(function() return C_Traits.GetTreeNodes(treeID) end)
+        add("TRAITS arbre " .. treeID .. " : " .. ((okN and nodes) and #nodes or "illisible") .. " nœuds")
+        for _, nodeID in ipairs((okN and nodes) or {}) do
+            local okNi, info = pcall(function() return C_Traits.GetNodeInfo(configID, nodeID) end)
+            if okNi and type(info) == "table" and (info.currentRank or 0) > 0 and shown < 120 then
+                shown = shown + 1
+                if shown == 1 then add("TRAITS champs d'un nœud : " .. Keys(info)) end
+                local entryID = (info.activeEntry and info.activeEntry.entryID) or (info.entryIDs and info.entryIDs[1])
+                add(("  nœud %s rang %s/%s type=%s sous-arbre=%s pos=%s,%s : %s"):format(tostring(nodeID),
+                    tostring(info.currentRank), tostring(info.maxRanks), tostring(info.type), tostring(info.subTreeID),
+                    tostring(info.posX), tostring(info.posY), EntryName(configID, entryID)))
+            end
+        end
+    end
+    add("TRAITS nœuds achetés affichés : " .. shown)
+end

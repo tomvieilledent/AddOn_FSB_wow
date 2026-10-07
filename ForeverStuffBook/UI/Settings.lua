@@ -5,7 +5,7 @@ local _, FSB = ...
 local UI = {}
 FSB.UI = UI
 
-local WIDTH, HEIGHT = 440, 450
+local WIDTH, HEIGHT = 440, 480
 local frame
 local weightBoxes = {}
 
