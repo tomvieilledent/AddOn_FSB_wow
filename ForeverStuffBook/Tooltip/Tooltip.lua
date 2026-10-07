@@ -24,6 +24,8 @@ end
 
 local function AddDetails(tooltip, verdict)
     local L = FSB.L
+    if verdict.unusable then tooltip:AddLine(L.UNUSABLE, unpack(GREY)) end
+    if verdict.reqLevel then tooltip:AddLine(L.REQ_LEVEL:format(verdict.reqLevel), 1, 0.6, 0.2) end
     if verdict.kind == "BETTER_OTHER" then
         tooltip:AddLine(L.BETTER_FOR:format(table.concat(verdict.others, ", ")), 1, 1, 1)
     end

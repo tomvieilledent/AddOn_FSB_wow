@@ -79,6 +79,15 @@ function Analyzer.Analyze(link, equipLoc)
     if not stats then return nil end -- données pas encore chargées : pas de mise en cache
     RecordUnknownStats(stats)
 
+    local usability = FSB.Compat.GetUsability(link)
+    if usability and usability.unusable then
+        -- Inutilisable par le personnage : rien à comparer.
+        local result = { kind = mode == "GROUP" and "CUPI" or "SELL", unusable = true }
+        cache[mode][equipLoc] = cache[mode][equipLoc] or {}
+        cache[mode][equipLoc][link] = result
+        return result
+    end
+
     local equipped = FSB.Compat.GetAllEquipped()
     local newSetID = FSB.Compat.GetSetID(link)
     local setState = { link = link }
@@ -96,6 +105,9 @@ function Analyzer.Analyze(link, equipLoc)
         result.unscanned = FSB.Inspector.CountPending()
     else
         result = FSB.Verdict.Solo(ctx)
+    end
+    if usability and usability.reqLevel and usability.reqLevel > FSB.Compat.PlayerLevel() then
+        result.reqLevel = usability.reqLevel
     end
     result.setNote = result.slot and setState.changeFor(result.slot) or nil
     result.setSensitive = SetSensitive(equipped, equipLoc, newSetID)

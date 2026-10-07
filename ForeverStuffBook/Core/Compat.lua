@@ -30,13 +30,48 @@ end
 
 -- Paliers de bonus ("(2) Set : ...") lus dans le tooltip de l'objet, selon le format localisé
 -- du jeu (ITEM_SET_BONUS_GRAY). Retourne une liste triée, ou nil si illisible.
-local function BonusPattern()
-    local fmt = _G.ITEM_SET_BONUS_GRAY
+local function FormatPattern(fmt)
     if type(fmt) ~= "string" then return nil end
     local p = fmt:gsub("%%d", "\1"):gsub("%%s", "\2")
     p = p:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%0")
     p = p:gsub("\1", "(%%d+)"):gsub("\2", ".+")
     return "^" .. p .. "$"
+end
+
+local function BonusPattern() return FormatPattern(_G.ITEM_SET_BONUS_GRAY) end
+
+-- Ligne de texte rouge (restriction non remplie) : couleur lue dans les données du tooltip.
+local function IsRed(color)
+    if type(color) ~= "table" then return false end
+    local r, g, b = color.r, color.g, color.b
+    return type(r) == "number" and type(g) == "number" and type(b) == "number"
+        and r > 0.9 and g < 0.3 and b < 0.3
+end
+
+-- Utilisabilité par le personnage, lue dans les lignes rouges du tooltip (classe, armure, arme...).
+-- Retourne { unusable = bool, reqLevel = n|nil } ou nil si le tooltip est illisible
+-- (on ne filtre alors rien : aucune restriction inventée).
+function Compat.GetUsability(link)
+    if not link or not C_TooltipInfo or not C_TooltipInfo.GetHyperlink then return nil end
+    local ok, data = pcall(C_TooltipInfo.GetHyperlink, link)
+    if not ok or type(data) ~= "table" or type(data.lines) ~= "table" then return nil end
+    if TooltipUtil and TooltipUtil.SurfaceArgs then pcall(TooltipUtil.SurfaceArgs, data) end
+    local levelPattern = FormatPattern(_G.ITEM_MIN_LEVEL)
+    local result = { unusable = false }
+    for _, line in ipairs(data.lines) do
+        for _, side in ipairs({ "left", "right" }) do
+            local text, color = line[side .. "Text"], line[side .. "Color"]
+            if type(text) == "string" and IsRed(color) then
+                local n = levelPattern and text:match(levelPattern)
+                if n then
+                    result.reqLevel = tonumber(n)
+                else
+                    result.unusable = true
+                end
+            end
+        end
+    end
+    return result
 end
 
 function Compat.GetSetThresholds(link)
@@ -82,4 +117,8 @@ end
 function Compat.CanDualWield()
     if CanDualWield then return CanDualWield() and true or false end
     return true
+end
+
+function Compat.PlayerLevel()
+    return UnitLevel and UnitLevel("player") or 0
 end

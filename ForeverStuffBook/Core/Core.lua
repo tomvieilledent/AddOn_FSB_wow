@@ -47,6 +47,7 @@ local handlers = {
     PLAYER_ENTERING_WORLD = OnEnteringWorld,
     ZONE_CHANGED_NEW_AREA = RefreshGroupState,
     GROUP_ROSTER_UPDATE = RefreshGroupState,
+    PLAYER_LEVEL_UP = function() FSB.Analyzer.InvalidateAll() end,
     PLAYER_EQUIPMENT_CHANGED = function(slot) FSB.Analyzer.InvalidateSlot(slot) end,
     INSPECT_READY = function(guid) FSB.Inspector.OnInspectReady(guid) end,
     UNIT_INVENTORY_CHANGED = function(unit) FSB.Inspector.OnUnitInventoryChanged(unit) end,

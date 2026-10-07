@@ -38,6 +38,13 @@ local function Sample(lines)
     add("equipLoc : " .. tostring(FSB.Compat.GetEquipLoc(link)))
     add("setID : " .. tostring(FSB.Compat.GetSetID(link)))
     add("paliers de set : " .. (FSB.Compat.GetSetThresholds(link) and "lus" or "nil"))
+    local okT, data = pcall(C_TooltipInfo and C_TooltipInfo.GetHyperlink or error, link)
+    local first = okT and type(data) == "table" and data.lines and data.lines[1]
+    add("tooltip ligne 1 : " .. (first and (tostring(first.leftText) .. " | couleur=" .. type(first.leftColor)
+        .. (type(first.leftColor) == "table" and (" r=" .. tostring(first.leftColor.r)) or "")) or "illisible"))
+    local usable = FSB.Compat.GetUsability(link)
+    add("utilisabilité : " .. (usable and ("inutilisable=" .. tostring(usable.unusable) .. " niveau=" .. tostring(usable.reqLevel)) or "nil"))
+    add("ITEM_MIN_LEVEL : " .. tostring(_G.ITEM_MIN_LEVEL))
     add("spé joueur : " .. tostring(FSB.Spec.Detect()))
 end
 
