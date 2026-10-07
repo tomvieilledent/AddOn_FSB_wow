@@ -61,3 +61,7 @@ Addon passif : aucune action de jeu, aucune simulation d'entrée, aucune API pro
 - `groupIDs` des nœuds (VERIFIED, rapport) : groupes de lignes imbriqués (ex. 11604, 12760...), pas un groupe par arbre ; trois groupes
   « d'arbre » (11608 Discipline, 11615 Sacré, 11622 Ombre) existent mais sont mêlés aux autres : non utilisés. Seule la position est utilisée.
 - La détection d'arbre fonctionne en jeu (clé de rôle mémorisée `1487:1` = arbre n°1 Discipline).
+
+## Rôle de groupe (VERIFIED partiel, rapport 2026-10-07)
+- `UnitGroupRolesAssigned("player")` = `NONE` en solo, puis `DAMAGER` pour un prêtre soigneur dans un groupe : valeur par défaut, pas un choix (toutes les spés de Forever ont le rôle `DAMAGER`).
+- Utilisation : seuls `HEALER` et `TANK` (choix explicites) servent à comparer un autre joueur dont la classe a plusieurs rôles ; `DAMAGER` est ignoré.

@@ -19,6 +19,7 @@ _G.UnitIsVisible = function(u) return world.group[u].visible end
 _G.UnitIsUnit = function(u, v) return u == v end
 _G.UnitGUID = function(u) return u == "player" and "G-me" or (world.group[u] and world.group[u].guid) end
 _G.UnitName = function(u) return world.group[u].name end
+_G.UnitGroupRolesAssigned = function(u) return (world.group[u] and world.group[u].role) or "NONE" end
 _G.UnitClass = function(u) return "Cls", (world.group[u] and world.group[u].classFile) or "MAGE", 8 end
 _G.C_Map = { GetBestMapForUnit = function(u) return u == "player" and world.myMap or world.group[u].map end }
 _G.CanInspect = function(u) return true end
@@ -120,4 +121,15 @@ check("classe à plusieurs rôles : pas de comparaison (rôle illisible)", #I.Ge
 world.group = {}; I.Reset(); member(1, { classFile = "MAGE" }); refresh(); scanAll(3)
 check("classe à un seul rôle : comparable", #I.GetComparableMembers() == 1)
 
+-- Rôle de groupe explicite : prêtre HEALER comparable, prêtre DAMAGER (défaut) non comparable
+world.group = {}; I.Reset(); member(1, { classFile = "PRIEST", role = "HEALER" }); refresh(); scanAll(3)
+check("prêtre explicitement HEALER : comparable en Soigneur", #I.GetComparableMembers() == 1)
+world.group = {}; I.Reset(); member(1, { classFile = "PRIEST", role = "DAMAGER" }); refresh(); scanAll(3)
+check("prêtre DAMAGER (rôle par défaut) : non comparable", #I.GetComparableMembers() == 0)
+world.group = {}; I.Reset(); member(1, { classFile = "MAGE", role = "HEALER" }); refresh(); scanAll(3)
+check("mage marqué HEALER : reste sur son seul rôle", #I.GetComparableMembers() == 1)
+world.group = {}; I.Reset(); member(1, { classFile = "DRUID", role = "TANK" }); refresh(); scanAll(3)
+check("druide explicitement TANK : comparable", #I.GetComparableMembers() == 1)
+world.group["party1"].role = "NONE"; refresh()
+check("rôle retiré au roster : plus comparable", #I.GetComparableMembers() == 0)
 T.finish("inspector")

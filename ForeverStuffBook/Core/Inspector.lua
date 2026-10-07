@@ -49,8 +49,28 @@ local function IsInMyInstance(unit)
 end
 
 -- Met à jour cache et liste "à scanner" d'après la composition actuelle du groupe.
+-- Rôle de groupe explicite (HEALER ou TANK) d'un membre. DAMAGER/NONE sont ignorés : sur Forever toutes les
+-- spés ont le rôle DAMAGER par défaut (VERIFIED), donc DAMAGER n'est pas un choix du joueur.
+local function ExplicitRole(unit)
+    if not UnitGroupRolesAssigned then return nil end
+    local ok, role = pcall(UnitGroupRolesAssigned, unit)
+    if ok and (role == "HEALER" or role == "TANK") then return role end
+end
+
+local EXPLICIT_PROFILE = { HEALER = "Soigneur", TANK = "Tank" }
+
+local function MemberProfile(m)
+    local roles = FSB.SpecEngine.Choices(nil, m.classFile, nil, FSB.Classes.ROLES, FSB.Profiles.List())
+    if #roles == 1 then return roles[1] end
+    local wanted = m.groupRole and EXPLICIT_PROFILE[m.groupRole]
+    for _, p in ipairs(roles) do
+        if p.name == wanted then return p end
+    end
+end
+
 local function SyncRoster()
     local inGroup = {}
+    local rolesChanged = false
     pending = {}
     for _, unit in ipairs(GroupUnits()) do
         if not UnitIsUnit(unit, "player") then
@@ -59,6 +79,10 @@ local function SyncRoster()
                 inGroup[guid] = true
                 local m = members[guid]
                 if (not m or not m.complete) and IsConnected(unit) then pending[guid] = unit end
+                if m then
+                    local role = ExplicitRole(unit)
+                    if role ~= m.groupRole then m.groupRole = role; rolesChanged = true end
+                end
             end
         end
     end
@@ -66,7 +90,7 @@ local function SyncRoster()
     for guid in pairs(members) do
         if not inGroup[guid] then members[guid] = nil; removed = true end
     end
-    if removed then FSB.Analyzer.InvalidateGroup() end
+    if removed or rolesChanged then FSB.Analyzer.InvalidateGroup() end
 end
 
 ---------------------------------------------------------------------------------------------
@@ -102,11 +126,10 @@ local function StoreMember(guid, unit)
     local equipped, complete = ReadEquipment(unit)
     members[guid] = {
         name = UnitName(unit), classID = select(3, UnitClass(unit)), classFile = select(2, UnitClass(unit)),
-        specID = ReadSpec(unit), equipped = equipped,
+        specID = ReadSpec(unit), equipped = equipped, groupRole = ExplicitRole(unit),
         complete = complete or attempts >= MAX_ATTEMPTS, attempts = attempts,
     }
-    local roles = FSB.SpecEngine.Choices(nil, members[guid].classFile, nil, FSB.Classes.ROLES, FSB.Profiles.List())
-    if #roles ~= 1 then
+    if not MemberProfile(members[guid]) then
         FSB.Log.Add("ROLE_MEMBRE_AMBIGU", { detail = tostring(members[guid].name) .. " classe=" .. tostring(members[guid].classFile), global = true })
     end
     FSB.Analyzer.InvalidateGroup()
@@ -188,14 +211,15 @@ end
 -- Accès pour l'analyse
 ---------------------------------------------------------------------------------------------
 
--- Forever n'expose qu'une spécialisation par classe : le rôle d'un autre joueur n'est pas lisible.
--- Un membre n'est comparable que si sa CLASSE n'a qu'un seul rôle possible (mage, voleur...) ;
--- sinon (prêtre, druide, paladin...) il est exclu : aucune spé ni rôle inventé.
+-- Forever n'expose qu'une spécialisation par classe : le rôle d'un autre joueur n'est pas lisible directement.
+-- Un membre est comparable si sa CLASSE n'a qu'un seul rôle possible (mage, voleur...), ou si le groupe lui
+-- attribue explicitement HEALER/TANK et que sa classe peut tenir ce rôle ; sinon (prêtre, druide, paladin...
+-- sans rôle explicite) il est exclu : aucune spé ni rôle inventé.
 function Inspector.GetComparableMembers()
     local list = {}
     for _, m in pairs(members) do
-        local roles = FSB.SpecEngine.Choices(nil, m.classFile, nil, FSB.Classes.ROLES, FSB.Profiles.List())
-        if #roles == 1 then list[#list + 1] = { name = m.name, weights = roles[1].weights, equipped = m.equipped } end
+        local profile = MemberProfile(m)
+        if profile then list[#list + 1] = { name = m.name, weights = profile.weights, equipped = m.equipped } end
     end
     return list
 end
