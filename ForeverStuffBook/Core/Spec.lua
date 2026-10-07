@@ -82,3 +82,19 @@ function Spec.MapCurrentTo(profileName)
     Spec.Apply()
     return true
 end
+
+-- Profils testés pour OFF-SPÉ : ceux que la classe du joueur peut réellement jouer.
+local classInfos
+function Spec.OffspecProfiles()
+    if not classInfos then
+        local infos = {}
+        for _, s in ipairs(Spec.ListForPlayerClass()) do
+            local info = SpecInfo(s.id)
+            infos[#infos + 1] = info or {}
+        end
+        if #infos == 0 then return FSB.Profiles.List() end -- spés illisibles : on ne mémorise pas
+        classInfos = infos
+    end
+    return FSB.SpecEngine.ClassProfiles(FSB.Profiles.List(), classInfos, FSB.Profiles.IsBuiltin,
+        FSB.db.activeProfile, FSB.db.specProfiles)
+end

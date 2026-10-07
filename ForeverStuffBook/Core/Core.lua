@@ -36,6 +36,7 @@ local function OnEnteringWorld()
     RefreshGroupState()
     -- Les données de talents peuvent arriver un peu après la connexion.
     C_Timer.After(3, function()
+        FSB.Analyzer.InvalidateAll() -- les données de spé ont pu arriver après les premiers survols
         if not FSB.Spec.Apply() and not FSB.db.specPromptDone and FSB.UI and FSB.UI.ShowSpecPicker then
             FSB.db.specPromptDone = true
             FSB.UI.ShowSpecPicker()
@@ -156,6 +157,13 @@ function Commands.etat()
         FSB.Inspector.CountPending(), #FSB.Inspector.GetComparableMembers()))
     local spec = FSB.Spec.Current()
     Print(FSB.L.STATE_SPEC:format(spec or "?", FSB.db.activeProfile, FSB.db.autoProfile and "auto" or "manuel"))
+    local info = spec and FSB.Spec.Info(spec)
+    Print(("Spé brute : détectée=%s manuelle=%s rôle=%s stat principale=%s"):format(
+        tostring(FSB.Spec.Detect()), tostring(FSB.db.manualSpecID),
+        tostring(info and info.role), tostring(info and info.primaryStat)))
+    local names = {}
+    for _, p in ipairs(FSB.Spec.OffspecProfiles()) do names[#names + 1] = p.name end
+    Print("Profils testés pour OFF-SPÉ : " .. table.concat(names, ", "))
 end
 
 SLASH_FSB1 = "/fsb"

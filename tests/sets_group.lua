@@ -11,6 +11,19 @@ local HEAL, MAGE, PHYS, TANK = unpack(FSB.db.profiles)
 local HP, AP = "ITEM_MOD_HEALING_POWER_SHORT", "ITEM_MOD_ATTACK_POWER_SHORT"
 local function item(stats, setID) return { stats = stats, setID = setID, link = "L" .. tostring(setID) } end
 
+-- Profils OFF-SPÉ selon la classe ---------------------------------------------------------------
+local SE, builtin = FSB.SpecEngine, FSB.Profiles.IsBuiltin
+local priest = { { role = "HEALER", primaryStat = 3 }, { role = "HEALER", primaryStat = 3 }, { role = "DAMAGER", primaryStat = 3 } }
+local function names(l) local t = {}; for _, p in ipairs(l) do t[#t + 1] = p.name end; return table.concat(t, ",") end
+check("prêtre : ni Tank ni physique", names(SE.ClassProfiles(FSB.db.profiles, priest, builtin, HEAL.name, {})) == HEAL.name .. "," .. MAGE.name)
+check("profil actif toujours gardé", names(SE.ClassProfiles(FSB.db.profiles, priest, builtin, TANK.name, {})):find("Tank"))
+check("profil associé à une spé gardé", names(SE.ClassProfiles(FSB.db.profiles, priest, builtin, HEAL.name, { [1] = PHYS.name })):find(PHYS.name))
+local custom = { name = "Farm", role = "DAMAGER", damage = "PHYSICAL", weights = {} }
+local withCustom = { HEAL, MAGE, PHYS, TANK, custom }
+check("profil utilisateur gardé", names(SE.ClassProfiles(withCustom, priest, builtin, HEAL.name, {})):find("Farm"))
+check("spé illisible : aucun filtre", #SE.ClassProfiles(FSB.db.profiles, { { role = "DAMAGER" } }, builtin, HEAL.name, {}) == 4)
+check("aucune info : aucun filtre", #SE.ClassProfiles(FSB.db.profiles, nil, builtin, HEAL.name, {}) == 4)
+
 -- Sets -------------------------------------------------------------------------------------
 local thresholds = function() return { 2, 4 } end
 local eq = { [S.HEAD] = item({}, 7), [S.CHEST] = item({}, 7), [S.LEGS] = item({}, 7), [S.HANDS] = item({}, 9) }

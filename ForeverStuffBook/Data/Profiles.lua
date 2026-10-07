@@ -36,6 +36,11 @@ function Profiles.Init(db)
     if not Profiles.Find(db.activeProfile, db) then db.activeProfile = db.profiles[1].name end
 end
 
+function Profiles.IsBuiltin(name)
+    for _, p in ipairs(DEFAULTS) do if p.name == name then return true end end
+    return false
+end
+
 function Profiles.List() return FSB.db.profiles end
 
 function Profiles.Find(name, db)

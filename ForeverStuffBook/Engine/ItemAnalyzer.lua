@@ -94,7 +94,7 @@ function Analyzer.Analyze(link, equipLoc)
     local ctx = {
         equipLoc = equipLoc, stats = stats, equipped = equipped,
         canDualWield = FSB.Compat.CanDualWield(),
-        profiles = FSB.Profiles.List(), active = FSB.Profiles.GetActive(),
+        profiles = FSB.Spec and FSB.Spec.OffspecProfiles() or FSB.Profiles.List(), active = FSB.Profiles.GetActive(),
         adjustFor = BuildSetAdjust(equipped, equipLoc, newSetID, setState),
     }
 
