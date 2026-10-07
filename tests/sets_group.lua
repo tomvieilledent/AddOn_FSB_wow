@@ -35,6 +35,7 @@ check("bonus Ombre : compte pour un DPS magique, pas pour un soigneur pur",
     and (saved.profiles[1].weights.ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT or 0) == 0)
 
 -- Stats vues en jeu : puissance des sorts (soins + dégâts) et DPS d'arme
+check("bonus contre un type de créature : connu, hors score", FSB.Stats.IsKnown("ITEM_MOD_ATTACK_POWER_VS_HUMANOID_SHORT") and not FSB.Stats.IsKnown("ITEM_MOD_NOUVEAU_TRUC"))
 check("SPELL_POWER et DPS d'arme reconnus", FSB.Stats.IsKnown("ITEM_MOD_SPELL_POWER_SHORT") and FSB.Stats.IsKnown("ITEM_MOD_DAMAGE_PER_SECOND_SHORT"))
 check("puissance des sorts compte pour un soigneur", FSB.ScoreEngine.Score({ ITEM_MOD_SPELL_POWER_SHORT = 20 }, HEAL.weights) > 0)
 check("DPS d'arme : compte pour le physique, pas pour un soigneur",

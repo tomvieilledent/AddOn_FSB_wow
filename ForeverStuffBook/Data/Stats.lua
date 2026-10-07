@@ -57,7 +57,10 @@ Stats.SCHOOL_KEYS = {
 local byKey, byAlias = {}, {}
 for _, s in ipairs(Stats.KEYS) do byKey[s.key] = s; byAlias[s.alias] = s end
 
-function Stats.IsKnown(key) return byKey[key] ~= nil or Stats.IGNORED[key] == true end
+-- Bonus contre un type de créature (ex. ITEM_MOD_ATTACK_POWER_VS_HUMANOID_SHORT) : vus en jeu, hors score.
+local function IsVersusBonus(key) return type(key) == "string" and key:find("^ITEM_MOD_.-_VS_") ~= nil end
+
+function Stats.IsKnown(key) return byKey[key] ~= nil or Stats.IGNORED[key] == true or IsVersusBonus(key) end
 function Stats.FromAlias(text) local s = byAlias[(text or ""):lower()]; return s and s.key end
 -- Libellé localisé de la stat (langue active), repli sur le libellé français puis sur la clé.
 function Stats.Label(key)

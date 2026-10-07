@@ -65,3 +65,10 @@ Addon passif : aucune action de jeu, aucune simulation d'entrée, aucune API pro
 ## Rôle de groupe (VERIFIED partiel, rapport 2026-10-07)
 - `UnitGroupRolesAssigned("player")` = `NONE` en solo, puis `DAMAGER` pour un prêtre soigneur dans un groupe : valeur par défaut, pas un choix (toutes les spés de Forever ont le rôle `DAMAGER`).
 - Utilisation : seuls `HEALER` et `TANK` (choix explicites) servent à comparer un autre joueur dont la classe a plusieurs rôles ; `DAMAGER` est ignoré.
+
+## Mode groupe en donjon (VERIFIED, rapport 2026-10-07, donjon à 5)
+- `IsInInstance()` = true, "party" ; mode FSB GROUPE ; 4 membres lus via `party1..4`.
+- `UnitGroupRolesAssigned(unit)` : `TANK` lu pour un druide, `HEALER` lu pour le joueur, `DAMAGER` par défaut pour les autres (paladins, démoniste).
+- `CanInspect` = true pour tous ; `UnitIsVisible` = false pour les membres hors de portée (non scannés).
+- Inspection : équipement lu pour les membres visibles ; un membre `TANK` explicite est comparé avec le profil Tank, un paladin `DAMAGER` n'est pas comparé.
+- Clé de stat supplémentaire : `ITEM_MOD_ATTACK_POWER_VS_HUMANOID_SHORT` (bonus contre un type de créature, hors score).
