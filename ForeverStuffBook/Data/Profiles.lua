@@ -62,6 +62,27 @@ function Profiles.Init(db)
     if not Profiles.Find(db.activeProfile, db) then db.activeProfile = db.profiles[1].name end
 end
 
+-- Nom affiché du profil dans la langue active (l'identifiant interne reste le nom français).
+function Profiles.DisplayName(name)
+    local names = FSB.L and FSB.L.PROFILES
+    return (names and names[name]) or name
+end
+
+-- Lignes de texte des poids : profil actif seul, ou tous les profils (diagnostic d'équilibrage).
+function Profiles.WeightLines(all)
+    local lines = {}
+    local list = all and FSB.db.profiles or { Profiles.GetActive() }
+    for _, p in ipairs(list) do
+        lines[#lines + 1] = FSB.L.POIDS_TITLE:format(Profiles.DisplayName(p.name))
+        for _, stat in ipairs(FSB.Stats.KEYS) do
+            local w = p.weights[stat.key]
+            if w then lines[#lines + 1] = ("  %s = %s"):format(FSB.Stats.Label(stat.key), w) end
+        end
+        if all then lines[#lines + 1] = "" end
+    end
+    return lines
+end
+
 function Profiles.IsBuiltin(name)
     for _, p in ipairs(DEFAULTS) do if p.name == name then return true end end
     return false

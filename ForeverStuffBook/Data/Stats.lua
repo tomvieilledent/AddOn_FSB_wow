@@ -59,7 +59,11 @@ for _, s in ipairs(Stats.KEYS) do byKey[s.key] = s; byAlias[s.alias] = s end
 
 function Stats.IsKnown(key) return byKey[key] ~= nil or Stats.IGNORED[key] == true end
 function Stats.FromAlias(text) local s = byAlias[(text or ""):lower()]; return s and s.key end
-function Stats.Label(key) return byKey[key] and byKey[key].label or key end
+-- Libellé localisé de la stat (langue active), repli sur le libellé français puis sur la clé.
+function Stats.Label(key)
+    local localized = FSB.L and FSB.L.STATS and FSB.L.STATS[key]
+    return localized or (byKey[key] and byKey[key].label) or key
+end
 
 -- Emplacements d'inventaire (INVSLOT_*).
 Stats.SLOT = { HEAD=1, NECK=2, SHOULDER=3, CHEST=5, WAIST=6, LEGS=7, FEET=8, WRIST=9,

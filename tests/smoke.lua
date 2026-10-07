@@ -48,6 +48,14 @@ check("tooltip : non équipable ignoré", #tt.n == 0)
 SlashCmdList.FSB("profil Tank"); check("plus de mode manuel : /fsb profil n'agit pas", FSB.db.activeProfile ~= "Tank" and FSB.db.autoProfile == nil)
 SlashCmdList.FSB("poids"); SlashCmdList.FSB("poids int 42")
 check("poids non modifiables", FSB.Profiles.GetActive().weights.ITEM_MOD_INTELLECT_SHORT ~= 42)
+SlashCmdList.FSB("lang en"); check("/fsb lang en", FSB.language == "enUS" and FSB.db.language == "enUS")
+t4 = { n = {}, GetItem = function() return "x", "ring" end, AddLine = function(s, t) s.n[#s.n + 1] = t end,
+    AddDoubleLine = function(s, t) s.n[#s.n + 1] = t end, Show = function() end }
+FSB.db.enabled = true; _G.C_Item.GetItemInfoInstant = function() return 1, "a", "b", "INVTYPE_FINGER" end
+hooks.tooltip(t4)
+check("verdict en anglais", t4.n[2] and (t4.n[2]:find("EQUIP", 1, true) or t4.n[2]:find("SELL", 1, true)))
+SlashCmdList.FSB("lang fr"); check("/fsb lang fr", FSB.language == "frFR")
+SlashCmdList.FSB("lang xx")
 SlashCmdList.FSB("off"); check("/fsb off", FSB.db.enabled == false)
 SlashCmdList.FSB("etat"); SlashCmdList.FSB("aide"); SlashCmdList.FSB("inconnus")
 SlashCmdList.FSB("debug")

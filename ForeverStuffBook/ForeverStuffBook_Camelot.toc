@@ -6,6 +6,7 @@
 ## SavedVariables: ForeverStuffBookDB
 
 Localization\frFR.lua
+Localization\enUS.lua
 Utils\Utils.lua
 Data\Stats.lua
 Data\Profiles.lua

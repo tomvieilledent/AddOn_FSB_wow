@@ -15,6 +15,7 @@ local function InitDB()
         end
     end
     FSB.db = ForeverStuffBookDB
+    if FSB.db.language and FSB.Locales[FSB.db.language] then FSB.language = FSB.db.language end
     -- Le mode manuel n'existe plus : on nettoie les anciens réglages.
     FSB.db.manualSpecID, FSB.db.autoProfile, FSB.db.specPromptDone, FSB.db.specProfiles = nil, nil, nil, nil
     FSB.build = (select(1, GetBuildInfo and GetBuildInfo() or "?") or "?") .. " v" .. (GetAddOnMetadata and GetAddOnMetadata(ADDON, "Version") or "?")
@@ -93,15 +94,16 @@ function Commands.off() FSB.db.enabled = false; Print(FSB.L.DISABLED) end
 
 function Commands.aide() FSB.Utils.Report(FSB.L.HELP) end
 
--- Poids du profil actif, à titre indicatif (non modifiables).
-function Commands.poids()
-    local profile = FSB.Profiles.GetActive()
-    local lines = { profile.name .. " (poids fixes, indicatifs)" }
-    for _, s in ipairs(FSB.Stats.KEYS) do
-        local w = profile.weights[s.key]
-        if w then lines[#lines + 1] = ("%s = %s"):format(s.label, w) end
-    end
-    FSB.Utils.Report(lines)
+-- Poids de tous les profils, à titre indicatif (non modifiables).
+function Commands.poids() FSB.Utils.Report(FSB.Profiles.WeightLines(true)) end
+
+-- /fsb lang fr|en : change la langue de l'interface et des verdicts.
+function Commands.lang(rest)
+    local codes = { fr = "frFR", en = "enUS", frfr = "frFR", enus = "enUS" }
+    local code = codes[rest:lower()]
+    if not code then return Print(FSB.L.LANG_UNKNOWN:format(rest)) end
+    FSB.SetLanguage(code)
+    Print(FSB.L.LANG_CHANGED)
 end
 
 function Commands.role() if FSB.UI and FSB.UI.ShowRolePicker then FSB.UI.ShowRolePicker(true) end end

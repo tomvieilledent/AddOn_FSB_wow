@@ -32,7 +32,7 @@ end
 
 local function VerdictText(verdict)
     local text = FSB.L[TEXT_KEY[verdict.kind]]
-    if verdict.kind == "OFFSPEC" then text = text .. " — " .. verdict.profile end
+    if verdict.kind == "OFFSPEC" then text = text .. " — " .. FSB.Profiles.DisplayName(verdict.profile) end
     local icon = ICON[verdict.kind]
     if Option("icons") then
         text = (icon and ("|T" .. ICON_PATH .. icon .. ":16:16:0:0|t ") or "      ") .. text

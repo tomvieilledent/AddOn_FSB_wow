@@ -1,26 +1,39 @@
 local _, FSB = ...
 
--- Interface de configuration compacte (/fsb). Construite à la première ouverture.
+-- Interface de configuration compacte (/fsb) : onglets Général et Stats. Construite à la première ouverture.
 -- Toute erreur de construction est interceptée : l'interface ne doit jamais casser l'analyse.
 local UI = {}
 FSB.UI = UI
 
-local WIDTH, HEIGHT = 440, 480
+-- Onglet « Stats » temporaire : à passer à false (ou supprimer BuildStatsTab) une fois les poids équilibrés.
+UI.SHOW_STATS_TAB = true
+
+local WIDTH, HEIGHT = 440, 500
 local frame
 local weightBoxes = {}
+local texts = {} -- { widget, clé de texte } : réaffichés au changement de langue
 
 local function Editing() return FSB.Profiles.GetActive() end
+
+-- text : clé de FSB.L (traduite et mémorisée) ou texte brut.
+local function Resolve(text, widget)
+    if FSB.L[text] ~= nil then
+        texts[#texts + 1] = { widget = widget, key = text }
+        return FSB.L[text]
+    end
+    return text
+end
 
 local function Label(parent, text, x, y, template)
     local fs = parent:CreateFontString(nil, "OVERLAY", template or "GameFontNormalSmall")
     fs:SetPoint("TOPLEFT", x, y)
-    fs:SetText(text)
+    fs:SetText(Resolve(text, fs))
     return fs
 end
 
 local function Button(parent, text, w, x, y, onClick)
     local b = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-    b:SetSize(w, 22); b:SetPoint("TOPLEFT", x, y); b:SetText(text)
+    b:SetSize(w, 22); b:SetPoint("TOPLEFT", x, y); b:SetText(Resolve(text, b))
     b:SetScript("OnClick", onClick)
     return b
 end
@@ -29,7 +42,7 @@ local function Check(parent, text, x, y, get, set)
     local c = CreateFrame("CheckButton", nil, parent, "UICheckButtonTemplate")
     c:SetPoint("TOPLEFT", x, y); c:SetSize(24, 24)
     local label = c.Text or c.text
-    if label then label:SetText(text) end
+    if label then label:SetText(Resolve(text, label)) end
     c:SetScript("OnClick", function(self) set(self:GetChecked() and true or false) end)
     c.Refresh = function(self) self:SetChecked(get()) end
     return c
@@ -43,33 +56,63 @@ function UI.Refresh()
     if not frame then return end
     frame.enabled:Refresh(); frame.icons:Refresh(); frame.details:Refresh()
     frame.status:SetText(FSB.Spec.Label())
-    
-
-    local active = Editing()
-    for _, row in ipairs(weightBoxes) do
-        row.box:SetText(active.weights[row.key] and tostring(active.weights[row.key]) or "-")
+    frame.langFR:SetEnabled(FSB.language ~= "frFR")
+    frame.langEN:SetEnabled(FSB.language ~= "enUS")
+    if frame.statsTab then
+        local active = Editing()
+        for _, row in ipairs(weightBoxes) do
+            row.name:SetText(FSB.Stats.Label(row.key))
+            row.box:SetText(active.weights[row.key] and tostring(active.weights[row.key]) or "-")
+        end
     end
+end
+
+-- Changement de langue : tous les textes enregistrés sont réécrits.
+function UI.Retranslate()
+    for _, t in ipairs(texts) do t.widget:SetText(FSB.L[t.key]) end
+    UI.Refresh()
 end
 
 ---------------------------------------------------------------------------------------------
 -- Construction
 ---------------------------------------------------------------------------------------------
 
-local function BuildWeights(parent, top)
-    local L = FSB.L
-    Label(parent, L.UI_WEIGHTS, 16, top, "GameFontNormal")
+local TOP = -64 -- haut du contenu des onglets
+
+local function BuildGeneralTab(tab)
+    frame.enabled = Check(tab, "UI_ENABLED", 12, -4,
+        function() return FSB.db.enabled end, function(v) FSB.db.enabled = v end)
+    local function display(name)
+        return function() return FSB.db.display[name] ~= false end,
+            function(v) FSB.db.display[name] = v end
+    end
+    frame.icons = Check(tab, "UI_ICONS", 190, -4, display("icons"))
+    frame.details = Check(tab, "UI_DETAILS", 290, -4, display("details"))
+    frame.status = Label(tab, "", 16, -40, "GameFontHighlightSmall")
+    Button(tab, "UI_PICK_ROLE", 130, 16, -66, function() UI.ShowRolePicker(true) end)
+    Label(tab, "UI_LANGUAGE", 16, -108, "GameFontNormal")
+    frame.langFR = Button(tab, "Français", 110, 16, -128, function() FSB.SetLanguage("frFR") end)
+    frame.langEN = Button(tab, "English", 110, 132, -128, function() FSB.SetLanguage("enUS") end)
+end
+
+-- Onglet temporaire : poids indicatifs (lecture seule) du profil actif + export de tous les profils.
+local function BuildStatsTab(tab)
+    Label(tab, "UI_STATS_NOTE", 16, -4)
+    Label(tab, "UI_WEIGHTS", 16, -26, "GameFontNormal")
     for i, s in ipairs(FSB.Stats.KEYS) do
         local col, row = (i - 1) % 2, math.floor((i - 1) / 2)
-        local x, y = 16 + col * 210, top - 22 - row * 22
-        Label(parent, s.label, x, y - 4)
-        local value = Label(parent, "", x + 130, y - 4, "GameFontHighlightSmall")
-        weightBoxes[#weightBoxes + 1] = { key = s.key, box = value }
+        local x, y = 16 + col * 210, -48 - row * 20
+        local name = Label(tab, FSB.Stats.Label(s.key), x, y)
+        local value = Label(tab, "", x + 150, y, "GameFontHighlightSmall")
+        weightBoxes[#weightBoxes + 1] = { key = s.key, name = name, box = value }
     end
-    return top - 22 - math.ceil(#FSB.Stats.KEYS / 2) * 22
+    local bottom = -48 - math.ceil(#FSB.Stats.KEYS / 2) * 20 - 8
+    Button(tab, "UI_ALL_PROFILES", 190, 16, bottom, function()
+        FSB.Utils.Report(FSB.Profiles.WeightLines(true))
+    end)
 end
 
 local function Build()
-    local L = FSB.L
     frame = CreateFrame("Frame", "FSBSettingsFrame", UIParent, "BackdropTemplate")
     frame:SetSize(WIDTH, HEIGHT); frame:SetPoint("CENTER")
     frame:SetBackdrop({ bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -80,21 +123,33 @@ local function Build()
     frame:SetFrameStrata("DIALOG")
     tinsert(UISpecialFrames, "FSBSettingsFrame") -- se ferme avec Échap
 
-    Label(frame, L.UI_TITLE, 16, -14, "GameFontNormalLarge")
+    Label(frame, "UI_TITLE", 16, -14, "GameFontNormalLarge")
     CreateFrame("Button", nil, frame, "UIPanelCloseButton"):SetPoint("TOPRIGHT", -4, -4)
 
-    frame.enabled = Check(frame, L.UI_ENABLED, 12, -38,
-        function() return FSB.db.enabled end, function(v) FSB.db.enabled = v end)
-    local function display(name)
-        return function() return FSB.db.display[name] ~= false end,
-            function(v) FSB.db.display[name] = v end
+    local function NewTab()
+        local tab = CreateFrame("Frame", nil, frame)
+        tab:SetPoint("TOPLEFT", 0, TOP); tab:SetPoint("BOTTOMRIGHT", 0, 0)
+        return tab
     end
-    frame.icons = Check(frame, L.UI_ICONS, 190, -38, display("icons"))
-    frame.details = Check(frame, L.UI_DETAILS, 290, -38, display("details"))
-    frame.status = Label(frame, "", 16, -68, "GameFontHighlightSmall")
-    Button(frame, L.UI_PICK_ROLE, 130, 290, -62, function() UI.ShowRolePicker(true) end)
-
-    BuildWeights(frame, -98)
+    local general = NewTab()
+    BuildGeneralTab(general)
+    local tabs = { general }
+    local buttons = {}
+    local function Show(index)
+        for i, t in ipairs(tabs) do
+            if i == index then t:Show() else t:Hide() end
+            buttons[i]:SetEnabled(i ~= index)
+        end
+        UI.Refresh()
+    end
+    buttons[1] = Button(frame, "UI_TAB_GENERAL", 110, 16, -38, function() Show(1) end)
+    if UI.SHOW_STATS_TAB then
+        frame.statsTab = NewTab()
+        BuildStatsTab(frame.statsTab)
+        tabs[2] = frame.statsTab
+        buttons[2] = Button(frame, "UI_TAB_STATS", 110, 132, -38, function() Show(2) end)
+    end
+    Show(1)
     frame:Hide()
 end
 
@@ -121,7 +176,7 @@ function UI.ShowRolePicker(force)
     note:SetPoint("TOP", 0, -36); note:SetText(FSB.L.ROLE_PICK_NOTE)
     roleFrame.widgets[1], roleFrame.widgets[2] = title, note
     for i, p in ipairs(choices) do
-        local b = Button(roleFrame, p.name, 220, 30, -50 - i * 28, function()
+        local b = Button(roleFrame, FSB.Profiles.DisplayName(p.name), 220, 30, -50 - i * 28, function()
             FSB.Spec.Choose(p.name)
             roleFrame:Hide()
             UI.Refresh()

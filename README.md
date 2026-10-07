@@ -27,7 +27,7 @@ Tests en jeu à effectuer : voir [`docs/TESTS_INGAME.md`](docs/TESTS_INGAME.md).
 
 ## Commandes
 
-`/fsb` (interface) · `on|off` · `role` · `profils` · `nouveau <nom>` · `supprimer <nom>` · `poids [<stat> <valeur>]` ·
+`/fsb` (interface : onglets Général et Stats, langue FR/EN) · `on|off` · `lang fr|en` · `role` · `profils` · `nouveau <nom>` · `supprimer <nom>` · `poids [<stat> <valeur>]` ·
 `inconnus` · `etat` · `log` · `mauvais [texte]` · `debug` · `sonde` · `specs` · `aide`
 (les sorties d'information s'ouvrent dans une fenêtre copiable)
 

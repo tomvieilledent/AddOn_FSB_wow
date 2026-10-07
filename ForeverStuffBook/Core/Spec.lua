@@ -158,6 +158,6 @@ function Spec.Label()
     local class = (info and info.name) or "?"
     local parts = { class }
     if treeName then parts[#parts + 1] = treeName end
-    parts[#parts + 1] = FSB.db.activeProfile or "?"
+    parts[#parts + 1] = FSB.Profiles.DisplayName(FSB.db.activeProfile or "?")
     return (treeName and FSB.L.LABEL_SPEC or FSB.L.LABEL_CLASS) .. " : " .. table.concat(parts, " · ")
 end
