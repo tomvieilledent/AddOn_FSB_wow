@@ -64,6 +64,7 @@ function UI.Refresh()
     if not frame then return end
     frame.enabled:Refresh(); frame.icons:Refresh(); frame.details:Refresh()
     frame.status:SetText(FSB.Spec.Label())
+    frame.devCommands:SetText(table.concat(FSB.L.HELP, "\n"))
     frame.credits:SetText(FSB.L.HOME_CREDITS .. "   ·   v" .. FSB.Utils.AddonVersion(FSB.name or "ForeverStuffBook"))
     frame.langFR:SetEnabled(FSB.language ~= "frFR")
     frame.langEN:SetEnabled(FSB.language ~= "enUS")
@@ -94,6 +95,13 @@ local function BuildHomeTab(tab)
     Paragraph(tab, "HOME_HOW", 16, -96, WIDTH - 40, "GameFontNormalSmall")
     frame.credits = tab:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     frame.credits:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 20, 18)
+end
+
+-- Onglet Commandes : liste des commandes et informations pour modifier l'addon (open source).
+local function BuildDevTab(tab)
+    Label(tab, "DEV_COMMANDS", 16, -4, "GameFontNormal")
+    frame.devCommands = Paragraph(tab, "", 16, -26, WIDTH - 40, "GameFontNormalSmall")
+    Paragraph(tab, "DEV_OPEN", 16, -300, WIDTH - 40, "GameFontHighlightSmall")
 end
 
 local function BuildGeneralTab(tab)
@@ -161,13 +169,18 @@ local function Build()
         end
         UI.Refresh()
     end
-    buttons[1] = Button(frame, "UI_TAB_HOME", 110, 16, -38, function() Show(1) end)
-    buttons[2] = Button(frame, "UI_TAB_GENERAL", 110, 132, -38, function() Show(2) end)
+    local x = 16
+    buttons[1] = Button(frame, "UI_TAB_HOME", 98, x, -38, function() Show(1) end)
+    buttons[2] = Button(frame, "UI_TAB_GENERAL", 98, x + 104, -38, function() Show(2) end)
+    local dev = NewTab()
+    BuildDevTab(dev)
+    tabs[3] = dev
+    buttons[3] = Button(frame, "UI_TAB_DEV", 98, x + 208, -38, function() Show(3) end)
     if UI.SHOW_STATS_TAB then
         frame.statsTab = NewTab()
         BuildStatsTab(frame.statsTab)
-        tabs[3] = frame.statsTab
-        buttons[3] = Button(frame, "UI_TAB_STATS", 110, 248, -38, function() Show(3) end)
+        tabs[4] = frame.statsTab
+        buttons[4] = Button(frame, "UI_TAB_STATS", 98, x + 312, -38, function() Show(4) end)
     end
     Show(1)
     frame:Hide()

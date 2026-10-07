@@ -1,6 +1,6 @@
 # Forever Stuff Book (FSB)
 
-Développé par **Koga / Fitaxal**.
+Développé par **Koga / Fitaxal**. Projet 100 % open source (licence MIT, voir `LICENSE` et `CONTRIBUTING.md`).
 
 Addon **passif** pour WoW Forever (client 1.60.1, Interface `16001`, moteur 12.x) : il analyse un objet
 équipable (vert à orange) au survol et affiche un verdict dans le tooltip. **Le joueur décide et agit toujours.**
@@ -30,7 +30,7 @@ Tests en jeu à effectuer : voir [`docs/TESTS_INGAME.md`](docs/TESTS_INGAME.md).
 ## Commandes
 
 `/fsb` (interface : onglets Général et Stats, langue FR/EN) · `on|off` · `lang fr|en` · `role` · `profils` · `nouveau <nom>` · `supprimer <nom>` · `poids [<stat> <valeur>]` ·
-`inconnus` · `etat` · `log` · `mauvais [texte]` · `debug` · `sonde` · `specs` · `aide`
+`inconnus` · `etat` · `rapport` (tout le diagnostic) · `log` · `mauvais [texte]` · `debug` · `sonde` · `specs` · `aide`
 (les sorties d'information s'ouvrent dans une fenêtre copiable)
 
 ## Moteur

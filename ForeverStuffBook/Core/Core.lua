@@ -120,7 +120,7 @@ function Commands.log(rest)
     if rest == "vider" then FSB.Log.Clear(); return Print(FSB.L.LOG_CLEARED) end
     if rest == "off" then FSB.db.logDisabled = true; return Print(FSB.L.LOG_OFF) end
     if rest == "on" then FSB.db.logDisabled = nil; return Print(FSB.L.LOG_ON) end
-    if FSB.UI and FSB.UI.ShowLog then FSB.UI.ShowLog(FSB.Log.Report()) else Print(FSB.Log.Report()) end
+    FSB.Utils.Report({ FSB.Log.Report() })
 end
 
 -- /fsb mauvais [commentaire] : signale que le verdict du dernier objet survolé est faux.
@@ -130,6 +130,31 @@ function Commands.mauvais(rest)
     FSB.Log.Add("SIGNALE_MAUVAIS", { link = FSB.lastLink, verdict = verdict, detail = rest })
     Print(FSB.L.LOG_FLAGGED)
 end
+
+-- /fsb rapport : toutes les informations de diagnostic d'un seul coup, dans une fenêtre copiable.
+function Commands.rapport()
+    local buffer = {}
+    local sections = {
+        { "ENVIRONNEMENT", function() FSB.Utils.Report(FSB.Probe.Environment()) end },
+        { "ÉTAT", Commands.etat },
+        { "SONDE DES API", FSB.Probe.Print },
+        { "STATS INCONNUES", Commands.inconnus },
+        { "JOURNAL DES HÉSITATIONS", Commands.log },
+        { "DERNIER OBJET SURVOLÉ", FSB.Probe.Debug },
+        { "SPÉCIALISATIONS DE TOUTES LES CLASSES", FSB.Probe.AllSpecs },
+        { "POIDS DE TOUS LES PROFILS", Commands.poids },
+    }
+    for _, section in ipairs(sections) do
+        buffer[#buffer + 1] = "===== " .. section[1] .. " ====="
+        FSB.Utils.sink = function(lines) for _, l in ipairs(lines) do buffer[#buffer + 1] = l end end
+        local ok, err = pcall(section[2], "")
+        FSB.Utils.sink = nil
+        if not ok then buffer[#buffer + 1] = "ERREUR : " .. tostring(err) end
+        buffer[#buffer + 1] = ""
+    end
+    FSB.Utils.Report(buffer)
+end
+Commands.tout, Commands.report = Commands.rapport, Commands.rapport
 
 function Commands.debug() FSB.Probe.Debug() end
 

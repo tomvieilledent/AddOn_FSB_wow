@@ -91,7 +91,7 @@ function Probe.Debug()
     local function add(s) lines[#lines + 1] = s end
     local link = FSB.lastLink
     if not link then
-        FSB.Utils.Print("Survole d'abord un objet équipable, puis retape /fsb debug.")
+        FSB.Utils.Report({ "Aucun objet survolé : survole un objet équipable puis relance /fsb debug." })
         return
     end
     local equipLoc = FSB.Compat.GetEquipLoc(link)
@@ -262,4 +262,21 @@ function Probe.Traits(add)
         end
     end
     add("TRAITS nœuds achetés affichés : " .. shown)
+end
+
+-- Environnement : version, client, langue, personnage (en tête du rapport complet).
+function Probe.Environment()
+    local lines = {}
+    local function add(s) lines[#lines + 1] = s end
+    add("FSB : " .. tostring(FSB.build) .. " | langue FSB=" .. tostring(FSB.language) .. " | client=" .. tostring(GetLocale and GetLocale()))
+    local _, classFile = UnitClass("player")
+    add("personnage : classe=" .. tostring(classFile) .. " niveau=" .. tostring(UnitLevel and UnitLevel("player")))
+    add("profil actif : " .. tostring(FSB.db and FSB.db.activeProfile) .. " | analyse activée=" .. tostring(FSB.db and FSB.db.enabled))
+    local d = FSB.db and FSB.db.display or {}
+    add("affichage : icônes=" .. tostring(d.icons ~= false) .. " détails=" .. tostring(d.details ~= false))
+    local choices = {}
+    for k, v in pairs(FSB.db and FSB.db.specChoice or {}) do choices[#choices + 1] = k .. "=" .. v end
+    table.sort(choices)
+    add("rôles mémorisés : " .. (#choices > 0 and table.concat(choices, ", ") or "aucun"))
+    return lines
 end
