@@ -143,6 +143,7 @@ function Commands.rapport()
     local sections = {
         { "ENVIRONNEMENT", function() FSB.Utils.Report(FSB.Probe.Environment()) end },
         { "ÉTAT", Commands.etat },
+        { "GROUPE", function() local lines = {}; FSB.Probe.Group(function(t) lines[#lines + 1] = t end); FSB.Utils.Report(lines) end },
         { "SONDE DES API", FSB.Probe.Print },
         { "STATS INCONNUES", Commands.inconnus },
         { "JOURNAL DES HÉSITATIONS", Commands.log },

@@ -89,6 +89,19 @@ FSB.UI.ShowText = keepShow
 check("/fsb etat : spés de la classe lues (pas d'erreur)", shown and shown:find("spé 1 : 1487", 1, true)
     and shown:find("GetSpecializationInfo(index) : 1487", 1, true) and not shown:find(") : erreur", 1, true))
 _G.C_SpecializationInfo, _G.GetSpecializationInfoForClassID, _G.GetSpecializationInfoForSpecID = nil, nil, nil
+_G.IsInGroup = function() return true end; _G.IsInRaid = function() return false end
+_G.GetNumGroupMembers = function() return 2 end
+_G.UnitExists = function(u) return u == "party1" end
+_G.UnitName = function() return "Guerrier" end
+_G.UnitGroupRolesAssigned = function() return "TANK" end
+_G.UnitIsConnected = function() return true end; _G.UnitIsVisible = function() return true end
+_G.CanInspect = function() return true end
+_G.UnitClass = function(u) return "X", u == "party1" and "WARRIOR" or "X", 5 end
+FSB.UI.ShowText = function(text) shown = text end
+shown = nil; SlashCmdList.FSB("rapport")
+check("rapport : section GROUPE avec les membres", shown and shown:find("===== GROUPE", 1, true)
+    and shown:find("party1 : Guerrier | classe=WARRIOR", 1, true) and shown:find("rôle=TANK", 1, true))
+FSB.UI.ShowText = keepShow
 SlashCmdList.FSB("specs")
 check("/fsb specs sans API : pas d'erreur", FSB.db.allSpecs ~= nil)
 SlashCmdList.FSB("sonde")

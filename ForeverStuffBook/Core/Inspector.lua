@@ -224,6 +224,19 @@ function Inspector.GetComparableMembers()
     return list
 end
 
+-- Lignes de diagnostic : ce qu'FSB a effectivement lu des membres (scan terminé ou non).
+function Inspector.Describe()
+    local lines = {}
+    for guid, m in pairs(members) do
+        local profile = MemberProfile(m)
+        lines[#lines + 1] = ("  lu : %s | classe=%s | rôle de groupe explicite=%s | équipement lu=%s | profil comparé=%s"):format(
+            tostring(m.name), tostring(m.classFile), tostring(m.groupRole), tostring(m.complete),
+            profile and profile.name or "aucun (non comparable)")
+    end
+    if #lines == 0 then lines[1] = "  aucun membre lu par FSB (scan actif seulement en donjon/raid)" end
+    return lines
+end
+
 function Inspector.CountPending()
     local n = 0
     for _ in pairs(pending) do n = n + 1 end

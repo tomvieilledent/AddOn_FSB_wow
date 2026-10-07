@@ -278,3 +278,29 @@ function Probe.Environment()
     add("rôles mémorisés : " .. (#choices > 0 and table.concat(choices, ", ") or "aucun"))
     return lines
 end
+
+-- Membres du groupe : informations lisibles sans inspecter (aucun NotifyInspect). Sert à vérifier ce que FSB
+-- pourrait lire en mode groupe (donjon/raid) : classe, rôle de groupe, présence, inspectabilité.
+function Probe.Group(add)
+    local inGroup = IsInGroup and IsInGroup()
+    local inRaid = IsInRaid and IsInRaid()
+    local okI, inInstance, instanceType = pcall(IsInInstance)
+    add(("groupe : %s | raid : %s | instance : %s (%s) | mode FSB : %s"):format(tostring(inGroup), tostring(inRaid),
+        tostring(okI and inInstance), tostring(okI and instanceType), FSB.Context.IsGroupMode() and "GROUPE" or "SOLO (le scan n'a lieu qu'en donjon/raid)"))
+    if not inGroup then return add("aucun groupe") end
+    local n = GetNumGroupMembers and GetNumGroupMembers() or 0
+    local units = {}
+    if inRaid then for i = 1, n do units[#units + 1] = "raid" .. i end
+    else for i = 1, n - 1 do units[#units + 1] = "party" .. i end end
+    for _, unit in ipairs(units) do
+        if UnitExists(unit) then
+            local function safe(fn, ...) local ok, v = pcall(fn, ...); return ok and tostring(v) or "?" end
+            add(("  %s : %s | classe=%s | niveau=%s | rôle=%s | connecté=%s | visible=%s | inspectable=%s"):format(unit,
+                safe(UnitName, unit), tostring(select(2, UnitClass(unit))), safe(UnitLevel, unit),
+                UnitGroupRolesAssigned and safe(UnitGroupRolesAssigned, unit) or "?",
+                safe(UnitIsConnected, unit), safe(UnitIsVisible, unit), CanInspect and safe(CanInspect, unit) or "?"))
+        end
+    end
+    local cached = FSB.Inspector and FSB.Inspector.Describe and FSB.Inspector.Describe() or {}
+    for _, line in ipairs(cached) do add(line) end
+end
