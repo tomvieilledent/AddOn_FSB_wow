@@ -39,4 +39,9 @@ v = FSB.Analyzer.Analyze("usable", ring)
 check("utilisable : À ÉQUIPER sans note", v.kind == "EQUIP" and v.reqLevel == nil and not v.unusable)
 _G.UnitLevel = function() return 30 end; FSB.Analyzer.InvalidateAll()
 check("niveau atteint : plus de note", FSB.Analyzer.Analyze("lvl", ring).reqLevel == nil)
+_G.GetInventoryItemLink = function(u, slot) return slot == FSB.Stats.SLOT.CHEST and "porte" or nil end
+local realGet = FSB.Compat.GetStats
+FSB.Compat.GetStats = function(l) if l == "porte" then return nil end return realGet(l) end
+FSB.Analyzer.InvalidateAll()
+check("pièce portée illisible : pas de verdict d'équipement", FSB.Analyzer.Analyze("usable", ring).kind == "UNKNOWN")
 T.finish("utilisabilité")

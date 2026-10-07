@@ -54,6 +54,10 @@ SlashCmdList.FSB("set 150"); check("/fsb set", FSB.Profiles.Find("Test").setBonu
 SlashCmdList.FSB("supprimer Test"); check("/fsb supprimer", not FSB.Profiles.Find("Test"))
 SlashCmdList.FSB("off"); check("/fsb off", FSB.db.enabled == false)
 SlashCmdList.FSB("etat"); SlashCmdList.FSB("aide"); SlashCmdList.FSB("inconnus")
+SlashCmdList.FSB("debug")
+check("/fsb debug sans objet : pas d'erreur", true)
+FSB.lastLink = "ring"; FSB.Probe.skipTooltips = true; SlashCmdList.FSB("debug")
+check("/fsb debug stocke le détail", type(FSB.db.debug) == "table" and #FSB.db.debug > 3)
 SlashCmdList.FSB("sonde")
 check("/fsb sonde stocke un rapport", type(FSB.db.probe) == "table" and #FSB.db.probe > 10)
 local t2 = { n = {}, GetItem = function(s) return "x", "ring" end,
@@ -67,6 +71,6 @@ FSB.db.display.icons = false; FSB.db.display.details = false
 local t3 = { n = {}, GetItem = function() return "x", "ring" end,
     AddLine = function(s, t) s.n[#s.n + 1] = t end, AddDoubleLine = function(s, t) s.n[#s.n + 1] = t end, Show = function() end }
 hooks.tooltip(t3)
-check("options : sans icône ni détails", #t3.n == 2 and not t3.n[2]:find("|T", 1, true))
+check("options : sans icône ni détails", #t3.n == 3 and not t3.n[2]:find("|T", 1, true))
 SlashCmdList.FSB("")
 T.finish("chargement")

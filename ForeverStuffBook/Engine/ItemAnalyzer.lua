@@ -13,10 +13,14 @@ local cache = { SOLO = {}, GROUP = {} }
 
 local function RecordUnknownStats(stats)
     local seen = FSB.db and FSB.db.unknownStats
-    if not seen then return end
+    local count = 0
     for key in pairs(stats) do
-        if not FSB.Stats.IsKnown(key) then seen[key] = true end
+        if not FSB.Stats.IsKnown(key) then
+            count = count + 1
+            if seen then seen[key] = true end
+        end
     end
+    return count
 end
 
 -- Libère-t-on les deux mains (2M) ou un seul emplacement ?
@@ -77,7 +81,7 @@ function Analyzer.Analyze(link, equipLoc)
 
     local stats = FSB.Compat.GetStats(link)
     if not stats then return nil end -- données pas encore chargées : pas de mise en cache
-    RecordUnknownStats(stats)
+    local unknownCount = RecordUnknownStats(stats)
 
     local usability = FSB.Compat.GetUsability(link)
     if usability and usability.unusable then
@@ -89,6 +93,10 @@ function Analyzer.Analyze(link, equipLoc)
     end
 
     local equipped = FSB.Compat.GetAllEquipped()
+    -- Une pièce portée illisible fausserait la comparaison : pas de verdict, pas de cache.
+    for _, slot in ipairs(FSB.Stats.RelatedSlots(equipLoc)) do
+        if equipped[slot] and equipped[slot].unreadable then return { kind = "UNKNOWN" } end
+    end
     local newSetID = FSB.Compat.GetSetID(link)
     local setState = { link = link }
     local ctx = {
@@ -109,6 +117,7 @@ function Analyzer.Analyze(link, equipLoc)
     if usability and usability.reqLevel and usability.reqLevel > FSB.Compat.PlayerLevel() then
         result.reqLevel = usability.reqLevel
     end
+    if unknownCount > 0 then result.unknownStats = unknownCount end
     result.setNote = result.slot and setState.changeFor(result.slot) or nil
     result.setSensitive = SetSensitive(equipped, equipLoc, newSetID)
 

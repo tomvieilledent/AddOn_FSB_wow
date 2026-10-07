@@ -3,6 +3,7 @@ local _, FSB = ...
 -- Pipeline : tooltip affiché -> équipable ? -> rareté 2..5 ? -> analyse (en cache) -> verdict.
 -- Les polices du jeu n'affichent pas les emojis : le verdict est coloré.
 local COLORS = {
+    UNKNOWN      = { 0.7, 0.7, 0.7 },
     EQUIP        = { 0.2, 1.0, 0.2 },
     TAKE         = { 0.2, 1.0, 0.2 },
     BETTER_OTHER = { 1.0, 0.85, 0.1 },
@@ -11,7 +12,7 @@ local COLORS = {
     CUPI         = { 1.0, 0.25, 0.25 },
 }
 local TEXT_KEY = {
-    EQUIP = "VERDICT_EQUIP", TAKE = "VERDICT_TAKE", BETTER_OTHER = "VERDICT_BETTER_OTHER",
+    UNKNOWN = "VERDICT_UNKNOWN", EQUIP = "VERDICT_EQUIP", TAKE = "VERDICT_TAKE", BETTER_OTHER = "VERDICT_BETTER_OTHER",
     OFFSPEC = "VERDICT_OFFSPEC", SELL = "VERDICT_SELL", CUPI = "VERDICT_CUPI",
 }
 local GREY = { 0.7, 0.7, 0.7 }
@@ -44,6 +45,7 @@ local function AddDetails(tooltip, verdict)
     local details = Option("details")
     if verdict.unusable then tooltip:AddLine(L.UNUSABLE, unpack(GREY)) end
     if verdict.reqLevel then tooltip:AddLine(L.REQ_LEVEL:format(verdict.reqLevel), 1, 0.6, 0.2) end
+    if verdict.unknownStats then tooltip:AddLine(L.UNKNOWN_STATS, 1, 0.6, 0.2) end
     if verdict.kind == "BETTER_OTHER" then
         tooltip:AddLine(L.BETTER_FOR:format(table.concat(verdict.others, ", ")), 1, 1, 1)
     end
@@ -73,6 +75,7 @@ local function AppendAnalysis(tooltip)
     if not equipLoc then return end
     if not U.IsAnalysedQuality(U.GetQuality(link)) then return end
 
+    FSB.lastLink = link
     local verdict = FSB.Analyzer.Analyze(link, equipLoc)
     if not verdict then return end
 

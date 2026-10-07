@@ -93,9 +93,12 @@ function Compat.GetSetThresholds(link)
     return #thresholds > 0 and thresholds or nil
 end
 
+-- Retourne nil si l'emplacement est vide ; { link, unreadable = true } si un objet est porté mais que
+-- ses stats sont illisibles (jamais confondu avec un emplacement vide).
 local function BuildItem(link)
+    if not link then return nil end
     local stats = Compat.GetStats(link)
-    if not stats then return nil end
+    if not stats then return { link = link, unreadable = true, stats = {} } end
     return { link = link, stats = stats, setID = Compat.GetSetID(link),
         twoHand = Compat.GetEquipLoc(link) == "INVTYPE_2HWEAPON" }
 end
