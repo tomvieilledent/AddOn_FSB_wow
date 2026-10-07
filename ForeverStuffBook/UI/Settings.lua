@@ -268,21 +268,26 @@ local function BuildSettings(page)
     local role = FlatButton(card, "UI_PICK_ROLE", 130, 28, function() UI.ShowRolePicker(true) end)
     role:SetPoint("TOPRIGHT", -12, -13)
 
-    Section(page, "UI_SECTION_DISPLAY", -112, PAGE_W)
-    page.enabled = Checkbox(page, "UI_ENABLED", 0, -146,
+    Section(page, "UI_SECTION_DISPLAY", -100, PAGE_W)
+    page.enabled = Checkbox(page, "UI_ENABLED", 0, -132,
         function() return FSB.db.enabled end, function(v) FSB.db.enabled = v end)
     local function display(name)
         return function() return FSB.db.display[name] ~= false end,
             function(v) FSB.db.display[name] = v end
     end
-    page.icons = Checkbox(page, "UI_ICONS", 0, -174, display("icons"))
-    page.details = Checkbox(page, "UI_DETAILS", 0, -202, display("details"))
+    page.icons = Checkbox(page, "UI_ICONS", 0, -158, display("icons"))
+    page.details = Checkbox(page, "UI_DETAILS", 0, -184, display("details"))
 
-    Section(page, "UI_LANGUAGE", -244, PAGE_W)
+    Section(page, "UI_SECTION_GROUP", -216, PAGE_W)
+    page.fairness = Checkbox(page, "UI_FAIRNESS", 0, -248,
+        function() return FSB.db.lootFairness ~= false end,
+        function(v) FSB.db.lootFairness = v; FSB.Analyzer.InvalidateGroup() end)
+
+    Section(page, "UI_LANGUAGE", -286, PAGE_W)
     page.langFR = FlatButton(page, "Français", 130, 28, function() FSB.SetLanguage("frFR") end)
-    page.langFR:SetPoint("TOPLEFT", 0, -278)
+    page.langFR:SetPoint("TOPLEFT", 0, -320)
     page.langEN = FlatButton(page, "English", 130, 28, function() FSB.SetLanguage("enUS") end)
-    page.langEN:SetPoint("TOPLEFT", 138, -278)
+    page.langEN:SetPoint("TOPLEFT", 138, -320)
 end
 
 ---------------------------------------------------------------------------------------------
@@ -294,7 +299,7 @@ function UI.Refresh()
     local s = pages.settings
     if s then
         s.status:SetText(FSB.Spec.Label())
-        s.enabled.Refresh(); s.icons.Refresh(); s.details.Refresh()
+        s.enabled.Refresh(); s.icons.Refresh(); s.details.Refresh(); s.fairness.Refresh()
         s.langFR:SetActive(FSB.language == "frFR"); s.langEN:SetActive(FSB.language == "enUS")
     end
     frame.version:SetText("v" .. FSB.Utils.AddonVersion(FSB.name or "ForeverStuffBook"))

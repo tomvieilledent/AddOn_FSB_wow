@@ -88,7 +88,10 @@ local function SyncRoster()
     end
     local removed = false
     for guid in pairs(members) do
-        if not inGroup[guid] then members[guid] = nil; removed = true end
+        if not inGroup[guid] then
+            if FSB.LootTracker and members[guid] then FSB.LootTracker.Remove(members[guid].name) end
+            members[guid] = nil; removed = true
+        end
     end
     if removed or rolesChanged then FSB.Analyzer.InvalidateGroup() end
 end
@@ -219,7 +222,10 @@ function Inspector.GetComparableMembers()
     local list = {}
     for _, m in pairs(members) do
         local profile = MemberProfile(m)
-        if profile then list[#list + 1] = { name = m.name, weights = profile.weights, equipped = m.equipped } end
+        if profile then
+            list[#list + 1] = { name = m.name, weights = profile.weights, equipped = m.equipped,
+                loot = FSB.LootTracker and FSB.LootTracker.Count(m.name) or 0 }
+        end
     end
     return list
 end

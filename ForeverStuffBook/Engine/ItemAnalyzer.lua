@@ -119,6 +119,7 @@ function Analyzer.Analyze(link, equipLoc)
     local result
     if mode == "GROUP" then
         ctx.members = FSB.Inspector.GetComparableMembers()
+        ctx.myLoot = FSB.LootTracker and UnitName and FSB.LootTracker.Count(UnitName("player")) or 0
         result = FSB.Verdict.Group(ctx)
         result.unscanned = FSB.Inspector.CountPending()
     else

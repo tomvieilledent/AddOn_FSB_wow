@@ -15,6 +15,7 @@ Data\Classes.lua
 Core\Compat.lua
 Core\Context.lua
 Core\Log.lua
+Core\LootTracker.lua
 Engine\ScoreEngine.lua
 Engine\EquipmentOptimizer.lua
 Engine\SetBonusEngine.lua

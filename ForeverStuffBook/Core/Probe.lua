@@ -303,4 +303,6 @@ function Probe.Group(add)
     end
     local cached = FSB.Inspector and FSB.Inspector.Describe and FSB.Inspector.Describe() or {}
     for _, line in ipairs(cached) do add(line) end
+    add("équité du loot : " .. ((FSB.db and FSB.db.lootFairness == false) and "désactivée" or "activée"))
+    for _, line in ipairs(FSB.LootTracker and FSB.LootTracker.Describe() or {}) do add(line) end
 end

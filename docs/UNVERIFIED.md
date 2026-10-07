@@ -26,3 +26,4 @@ Next action : API SPECIALIST pour chaque ligne, après récupération de la sort
 | `GetNumTalentTabs`, `GetTalentTabInfo` (disposition du retour), événements `PLAYER_TALENT_UPDATE`/`CHARACTER_POINTS_CHANGED` | Spec (arbre actif) | Présents ? Quel retour ? | Pas de spé réelle ; retour à la question de rôle |
 | Ordre des arbres par classe (Classes.TREES) | Spec | Même ordre que Classic ? | Mauvais rôle proposé |
 | `UnitGroupRolesAssigned(unit)` pour les autres membres : valeurs réelles (HEALER/TANK explicites ?) | Inspector | Un soigneur marqué HEALER est-il bien lu ? | Pas de comparaison des classes à plusieurs rôles |
+| Événement `CHAT_MSG_LOOT` et textes `LOOT_ITEM*` (format, texte lisible en instance, pas de valeur « secrète ») | LootTracker | Le butin des autres joueurs est-il lu ? (`/fsb rapport` → GROUPE → derniers messages de butin) | Pas d'équité du loot (aucun malus), le reste fonctionne |

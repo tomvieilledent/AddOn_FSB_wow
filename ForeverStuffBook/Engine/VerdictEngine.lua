@@ -10,7 +10,11 @@ FSB.Verdict = Verdict
 --  otherMargin : en groupe, un autre joueur doit gagner au moins cette part de la valeur de
 --                l'objet de PLUS que moi pour déclencher "MEILLEUR POUR UN AUTRE" (0.25 = 25 points
 --                de pourcentage de la valeur de l'objet). Évite le verdict pour une petite différence.
-Verdict.DEFAULT_THRESHOLDS = { upgradeRel = 0.03, upgradeAbs = 1, otherMargin = 0.25 }
+--  lootPenalty : équité en donjon. Le seuil d'un autre membre varie de lootPenalty (8 points) par objet d'équipement
+--                d'écart avec moi (déjà reçus dans l'instance), borné entre minBar et maxBar. Un joueur déjà servi doit
+--                justifier un plus gros upgrade, sans être exclu ; si c'est moi le plus servi, le seuil baisse.
+Verdict.DEFAULT_THRESHOLDS = { upgradeRel = 0.03, upgradeAbs = 1, otherMargin = 0.25, lootPenalty = 0.08,
+    minBar = 0.05, maxBar = 0.60 }
 
 local function Threshold(name)
     local custom = FSB.db and FSB.db.thresholds
@@ -74,14 +78,24 @@ function Verdict.Group(ctx)
     if solo.kind == "OFFSPEC" then return solo end
     if solo.kind == "SELL" then return { kind = "CUPI" } end
 
-    local better = {}
+    local fair = not (FSB.db and FSB.db.lootFairness == false)
+    local penalty = fair and Threshold("lootPenalty") or 0
+    local better, served = {}, {}
     for _, m in ipairs(ctx.members or {}) do
         local g = Gain(ctx, m.equipped, { weights = m.weights }, false, nil)
         local fit = SchoolFit(ctx.stats, ctx.active.weights, m.weights)
-        if g.upgrade and (fit or g.fraction >= solo.fraction + Threshold("otherMargin")) then
+        local diff = (m.loot or 0) - (ctx.myLoot or 0)
+        local margin = Threshold("otherMargin")
+        local bar = margin + penalty * diff
+        if bar > Threshold("maxBar") then bar = math.max(Threshold("maxBar"), margin) end -- le malus n'excède pas le plafond
+        if bar < Threshold("minBar") then bar = math.min(Threshold("minBar"), margin) end
+        -- Bonus d'école : suffit d'un upgrade, sauf si le joueur a déjà été plus servi que moi.
+        local need = fit and ((diff > 0 and penalty * diff) or -1) or bar
+        if g.upgrade and g.fraction >= solo.fraction + need then
             better[#better + 1] = m.name
+            if (m.loot or 0) > 0 then served[#served + 1] = ("%s (%d)"):format(m.name, m.loot) end
         end
     end
-    if #better > 0 then return { kind = "BETTER_OTHER", others = better, slot = solo.slot } end
+    if #better > 0 then return { kind = "BETTER_OTHER", others = better, served = served, slot = solo.slot } end
     return { kind = "TAKE", slot = solo.slot }
 end

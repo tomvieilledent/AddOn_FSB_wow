@@ -50,6 +50,10 @@ Tests en jeu à effectuer : voir [`docs/TESTS_INGAME.md`](docs/TESTS_INGAME.md).
 - **Spécialisation** : lue automatiquement via l'API, sans mode manuel ; le profil actif suit toujours la spé. Si la
   spé a plusieurs rôles possibles (soin/dégâts, tank/dps), FSB pose la question une fois (mémorisée par spé).
   Un autre joueur dont la spé est illisible n'est **pas comparé**.
+- **Équité du loot (donjon)** : FSB compte passivement l'équipement reçu par chaque joueur du groupe dans l'instance
+  (lecture du message de butin du chat). Pour « meilleur pour un autre », le seuil d'un joueur varie de 8 points de
+  pourcentage par objet d'écart avec moi (borné 5 %–60 %) : un joueur déjà servi doit justifier un plus gros upgrade
+  sans être exclu. Remis à zéro à chaque instance ; désactivable dans `/fsb` → Réglages. Voir `docs/UNVERIFIED.md`.
 - **Cache** : par mode (SOLO/GROUPE) et type d'objet. Équipement changé → seuls les types concernés
   (et les objets de set) sont invalidés ; profil/poids/seuils → tout ; données de groupe → cache GROUPE seulement.
 - **Scan de groupe** : un minuteur de 3 s actif seulement en mode groupe tant qu'un membre connecté n'est pas

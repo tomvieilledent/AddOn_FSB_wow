@@ -2,7 +2,7 @@ local ADDON, FSB = ...
 
 FSB.name = ADDON
 local defaults = {
-    enabled = true, specChoice = {},
+    enabled = true, lootFairness = true, specChoice = {},
     unknownStats = {}, display = {},
     -- thresholds : nil = valeurs par défaut du VerdictEngine
 }
@@ -40,6 +40,7 @@ end
 -- Groupe ou zone changé : recalcul du mode, du scan et du cache de groupe.
 local function RefreshGroupState()
     FSB.Context.Refresh()
+    FSB.LootTracker.Sync()
     if IsInGroup and not IsInGroup() then
         FSB.Inspector.Reset()
     else
@@ -62,6 +63,7 @@ end
 
 local handlers = {
     PLAYER_ENTERING_WORLD = OnEnteringWorld,
+    CHAT_MSG_LOOT = function(text) FSB.LootTracker.OnMessage(text) end,
     ZONE_CHANGED_NEW_AREA = RefreshGroupState,
     GROUP_ROSTER_UPDATE = RefreshGroupState,
     PLAYER_LEVEL_UP = function() FSB.Analyzer.InvalidateAll() end,

@@ -49,6 +49,9 @@ local function AddDetails(tooltip, verdict)
     if verdict.kind == "BETTER_OTHER" then
         tooltip:AddLine(L.BETTER_FOR:format(table.concat(verdict.others, ", ")), 1, 1, 1)
     end
+    if verdict.kind == "BETTER_OTHER" and verdict.served and #verdict.served > 0 then
+        tooltip:AddLine(L.LOOT_SERVED:format(table.concat(verdict.served, ", ")), unpack(GREY))
+    end
     if not details then return end
     local set = verdict.setNote
     if set then
