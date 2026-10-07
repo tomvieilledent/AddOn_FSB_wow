@@ -50,6 +50,15 @@ function Verdict.Solo(ctx)
     return { kind = "SELL" }
 end
 
+-- Objet « fait pour » un membre : il porte un bonus d'école que le profil de ce membre valorise et pas
+-- le mien (ex. dégâts Givre pour un mage Givre alors que je soigne).
+local function SchoolFit(stats, myWeights, theirWeights)
+    for _, key in ipairs(FSB.Stats.SCHOOL_KEYS) do
+        if (stats[key] or 0) > 0 and (theirWeights[key] or 0) > 0 and (myWeights[key] or 0) <= 0 then return true end
+    end
+    return false
+end
+
 -- Mode groupe : mêmes règles personnelles, plus la comparaison avec les membres connus.
 -- ctx.members : { { name, weights, equipped } } (uniquement des données certaines).
 -- Retourne { kind = "TAKE" | "BETTER_OTHER" | "OFFSPEC" | "CUPI", profile, others = {noms} }.
@@ -61,7 +70,8 @@ function Verdict.Group(ctx)
     local better = {}
     for _, m in ipairs(ctx.members or {}) do
         local g = Gain(ctx, m.equipped, { weights = m.weights }, false, nil)
-        if g.upgrade and g.fraction >= solo.fraction + Threshold("otherMargin") then
+        local fit = SchoolFit(ctx.stats, ctx.active.weights, m.weights)
+        if g.upgrade and (fit or g.fraction >= solo.fraction + Threshold("otherMargin")) then
             better[#better + 1] = m.name
         end
     end

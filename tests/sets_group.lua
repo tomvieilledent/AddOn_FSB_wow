@@ -40,6 +40,21 @@ local shadowItem = { [SHD] = 40 }
 check("bonus Ombre : vaut plus pour un profil DPS magique que pour un soigneur",
     FSB.ScoreEngine.Score(shadowItem, mig.profiles[2].weights) > FSB.ScoreEngine.Score(shadowItem, mig.profiles[1].weights))
 
+-- Bonus d'école : l'objet Givre revient au mage Givre, pas au mage Feu ----------------------------------
+local FROST, FIRE = "ITEM_MOD_FROST_DAMAGE_DONE_SHORT", "ITEM_MOD_FIRE_DAMAGE_DONE_SHORT"
+local gctx = { equipLoc = "INVTYPE_CHEST", stats = { [HP] = 30, [FROST] = 40 },
+    equipped = { [S.CHEST] = item({ [HP] = 20 }) }, profiles = { HEAL }, active = HEAL }
+local frostMage = { name = "Givrus", weights = { [FROST] = 100 }, equipped = { [S.CHEST] = { stats = { [FROST] = 30 } } } }
+local fireMage = { name = "Pyro", weights = { [FIRE] = 100 }, equipped = {} }
+gctx.members = { frostMage }
+local gv = FSB.Verdict.Group(gctx)
+check("bonus Givre : upgrade pour le mage Givre -> meilleur pour un autre", gv.kind == "BETTER_OTHER" and gv.others[1] == "Givrus")
+gctx.members = { fireMage }
+check("bonus Givre : mage Feu non concerné -> à prendre", FSB.Verdict.Group(gctx).kind == "TAKE")
+local frostMageNoGain = { name = "Givrus", weights = { [FROST] = 100 }, equipped = { [S.CHEST] = { stats = { [FROST] = 90 } } } }
+gctx.members = { frostMageNoGain }
+check("bonus Givre : pas d'upgrade pour lui -> à prendre", FSB.Verdict.Group(gctx).kind == "TAKE")
+
 -- Sets -------------------------------------------------------------------------------------
 local thresholds = function() return { 2, 4 } end
 local eq = { [S.HEAD] = item({}, 7), [S.CHEST] = item({}, 7), [S.LEGS] = item({}, 7), [S.HANDS] = item({}, 9) }

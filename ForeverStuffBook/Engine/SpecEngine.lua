@@ -52,3 +52,27 @@ function SpecEngine.ClassProfiles(profiles, infos, isBuiltin, activeName, specPr
     end
     return kept
 end
+
+-- Profils retenus par nom (rôles possibles de la classe) : les profils par défaut hors liste sont écartés ;
+-- profils utilisateur, profil actif et profils choisis sont conservés. Liste vide : aucun filtre.
+function SpecEngine.FilterByNames(profiles, names, isBuiltin, activeName, chosen)
+    if not names or #names == 0 then return profiles end
+    local allowed = {}
+    for _, n in ipairs(names) do allowed[n] = true end
+    for _, n in pairs(chosen or {}) do allowed[n] = true end
+    local kept = {}
+    for _, p in ipairs(profiles) do
+        if allowed[p.name] or not isBuiltin(p.name) or p.name == activeName then kept[#kept + 1] = p end
+    end
+    return kept
+end
+
+-- Noms de profils possibles pour une spé : table par spé, sinon rôles de la classe. Seuls les profils existants.
+function SpecEngine.Choices(specID, classFile, bySpec, byClass, profiles)
+    local names = (bySpec and bySpec[specID]) or (byClass and byClass[classFile]) or {}
+    local list = {}
+    for _, n in ipairs(names) do
+        for _, p in ipairs(profiles) do if p.name == n then list[#list + 1] = p; break end end
+    end
+    return list
+end

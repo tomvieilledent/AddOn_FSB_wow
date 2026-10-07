@@ -46,6 +46,12 @@ Stats.IGNORED = {
     ITEM_MOD_HEALTH_REGEN_SHORT = true,
 }
 
+-- Bonus d'école : ne profitent qu'aux sorts de cette école (ITEM_MOD_SPELL_DAMAGE_DONE_SHORT les couvre toutes).
+Stats.SCHOOL_KEYS = {
+    "ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT", "ITEM_MOD_FIRE_DAMAGE_DONE_SHORT", "ITEM_MOD_FROST_DAMAGE_DONE_SHORT",
+    "ITEM_MOD_NATURE_DAMAGE_DONE_SHORT", "ITEM_MOD_ARCANE_DAMAGE_DONE_SHORT", "ITEM_MOD_HOLY_DAMAGE_DONE_SHORT",
+}
+
 local byKey, byAlias = {}, {}
 for _, s in ipairs(Stats.KEYS) do byKey[s.key] = s; byAlias[s.alias] = s end
 

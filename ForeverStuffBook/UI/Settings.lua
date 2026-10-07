@@ -145,7 +145,7 @@ local function Build()
     frame.details = Check(frame, L.UI_DETAILS, 290, -38, display("details"))
     frame.auto = Check(frame, L.UI_AUTO, 12, -62, function() return FSB.db.autoProfile end,
         function(v) FSB.db.autoProfile = v; if v then FSB.Spec.Apply() end; UI.Refresh() end)
-    Button(frame, L.UI_PICK_SPEC, 130, 290, -62, function() UI.ShowSpecPicker() end)
+    Button(frame, L.UI_PICK_ROLE, 130, 290, -62, function() UI.ShowRolePicker(true) end)
 
     Label(frame, L.UI_PROFILES, 16, -98, "GameFontNormal")
     -- les boutons de profil sont créés dans Refresh (zone y = -118 à -190)
@@ -197,6 +197,39 @@ function UI.ShowSpecPicker()
         specFrame.widgets[#specFrame.widgets + 1] = b
     end
     specFrame:Show()
+end
+
+-- Question de rôle : proposée seulement quand la spé détectée a plusieurs rôles possibles.
+local roleFrame
+function UI.ShowRolePicker(force)
+    local specID = FSB.Spec.Current()
+    if not specID then return end
+    local choices = FSB.Spec.Choices(specID)
+    if #choices < 2 then return end
+    local info = FSB.Spec.Info(specID)
+    roleFrame = roleFrame or CreateFrame("Frame", "FSBRoleFrame", UIParent, "BackdropTemplate")
+    roleFrame:SetSize(280, 90 + #choices * 28); roleFrame:SetPoint("CENTER", 0, 120)
+    roleFrame:SetBackdrop({ bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", tile = true, tileSize = 32, edgeSize = 24,
+        insets = { left = 6, right = 6, top = 6, bottom = 6 } })
+    roleFrame:SetFrameStrata("DIALOG")
+    roleFrame.widgets = roleFrame.widgets or {}
+    for _, w in ipairs(roleFrame.widgets) do w:Hide() end
+    wipe(roleFrame.widgets)
+    local title = roleFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    title:SetPoint("TOP", 0, -16); title:SetText(FSB.L.ROLE_PICK_TITLE:format((info and info.name) or "?"))
+    local note = roleFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    note:SetPoint("TOP", 0, -36); note:SetText(FSB.L.ROLE_PICK_NOTE)
+    roleFrame.widgets[1], roleFrame.widgets[2] = title, note
+    for i, p in ipairs(choices) do
+        local b = Button(roleFrame, p.name, 220, 30, -50 - i * 28, function()
+            FSB.Spec.Choose(p.name)
+            roleFrame:Hide()
+            UI.Refresh()
+        end)
+        roleFrame.widgets[#roleFrame.widgets + 1] = b
+    end
+    roleFrame:Show()
 end
 
 function UI.Toggle()

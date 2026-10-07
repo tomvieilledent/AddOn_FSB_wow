@@ -9,6 +9,7 @@ Localization\frFR.lua
 Utils\Utils.lua
 Data\Stats.lua
 Data\Profiles.lua
+Data\Classes.lua
 Core\Compat.lua
 Core\Context.lua
 Engine\ScoreEngine.lua

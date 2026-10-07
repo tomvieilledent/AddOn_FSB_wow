@@ -2,7 +2,7 @@ local ADDON, FSB = ...
 
 FSB.name = ADDON
 local defaults = {
-    enabled = true, autoProfile = true, specPromptDone = false,
+    enabled = true, autoProfile = true, specPromptDone = false, specChoice = {},
     unknownStats = {}, specProfiles = {}, display = {},
     -- thresholds : nil = valeurs par défaut du VerdictEngine
 }
@@ -40,6 +40,8 @@ local function OnEnteringWorld()
         if not FSB.Spec.Apply() and not FSB.db.specPromptDone and FSB.UI and FSB.UI.ShowSpecPicker then
             FSB.db.specPromptDone = true
             FSB.UI.ShowSpecPicker()
+        else
+            FSB.Spec.PromptIfNeeded()
         end
     end)
 end
@@ -52,8 +54,10 @@ local handlers = {
     PLAYER_EQUIPMENT_CHANGED = function(slot) FSB.Analyzer.InvalidateSlot(slot) end,
     INSPECT_READY = function(guid) FSB.Inspector.OnInspectReady(guid) end,
     UNIT_INVENTORY_CHANGED = function(unit) FSB.Inspector.OnUnitInventoryChanged(unit) end,
-    PLAYER_SPECIALIZATION_CHANGED = function(unit) if unit == nil or unit == "player" then FSB.Spec.Apply() end end,
-    ACTIVE_PLAYER_SPECIALIZATION_CHANGED = function() FSB.Spec.Apply() end,
+    PLAYER_SPECIALIZATION_CHANGED = function(unit)
+        if unit == nil or unit == "player" then FSB.Spec.Apply(); FSB.Spec.PromptIfNeeded() end
+    end,
+    ACTIVE_PLAYER_SPECIALIZATION_CHANGED = function() FSB.Spec.Apply(); FSB.Spec.PromptIfNeeded() end,
 }
 
 local frame = CreateFrame("Frame")
@@ -136,6 +140,8 @@ function Commands.set(rest)
     FSB.Profiles.SetBonusValue(profile, value)
     Print(FSB.L.SET_VALUE:format(value, profile.name))
 end
+
+function Commands.role() if FSB.UI and FSB.UI.ShowRolePicker then FSB.UI.ShowRolePicker(true) end end
 
 function Commands.spe() if FSB.UI and FSB.UI.ShowSpecPicker then FSB.UI.ShowSpecPicker() end end
 
