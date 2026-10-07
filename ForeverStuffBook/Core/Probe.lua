@@ -28,13 +28,17 @@ end
 
 local function Sample(lines)
     local function add(s) lines[#lines + 1] = s end
-    local link = GetInventoryItemLink and GetInventoryItemLink("player", 1)
-    if not link then return add("échantillon : aucun objet équipé en tête") end
+    local link
+    for slot = 1, 19 do
+        link = GetInventoryItemLink and GetInventoryItemLink("player", slot)
+        if link then add("échantillon : emplacement " .. slot); break end
+    end
+    if not link then return add("échantillon : aucun objet équipé") end
     local stats = FSB.Compat.GetStats(link)
     local keys = {}
     for k, v in pairs(stats or {}) do keys[#keys + 1] = k .. "=" .. tostring(v) end
     table.sort(keys)
-    add("stats(tête) : " .. (stats and table.concat(keys, ", ") or "nil"))
+    add("stats : " .. (stats and table.concat(keys, ", ") or "nil"))
     add("equipLoc : " .. tostring(FSB.Compat.GetEquipLoc(link)))
     add("setID : " .. tostring(FSB.Compat.GetSetID(link)))
     add("paliers de set : " .. (FSB.Compat.GetSetThresholds(link) and "lus" or "nil"))
