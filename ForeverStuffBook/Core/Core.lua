@@ -15,6 +15,7 @@ local function InitDB()
         end
     end
     FSB.db = ForeverStuffBookDB
+    FSB.build = (select(1, GetBuildInfo and GetBuildInfo() or "?") or "?") .. " v" .. (GetAddOnMetadata and GetAddOnMetadata(ADDON, "Version") or "?")
     FSB.Profiles.Init(FSB.db)
 end
 
@@ -85,12 +86,14 @@ local Print = FSB.Utils.Print
 function Commands.on()  FSB.db.enabled = true;  Print(FSB.L.ENABLED) end
 function Commands.off() FSB.db.enabled = false; Print(FSB.L.DISABLED) end
 
-function Commands.aide() for _, line in ipairs(FSB.L.HELP) do Print(line) end end
+function Commands.aide() FSB.Utils.Report(FSB.L.HELP) end
 
 function Commands.profils()
+    local lines = {}
     for _, p in ipairs(FSB.Profiles.List()) do
-        Print(p.name .. (p.name == FSB.db.activeProfile and " *" or ""))
+        lines[#lines + 1] = p.name .. (p.name == FSB.db.activeProfile and " *" or "")
     end
+    FSB.Utils.Report(lines)
 end
 
 function Commands.profil(rest)
@@ -121,11 +124,12 @@ function Commands.poids(rest)
     local profile = FSB.Profiles.GetActive()
     local alias, value = rest:match("^(%S+)%s+(%-?[%d%.]+)$")
     if not alias then
+        local lines = {}
         for _, s in ipairs(FSB.Stats.KEYS) do
             local w = profile.weights[s.key]
-            if w then Print(("%s (%s) = %s"):format(s.label, s.alias, w)) end
+            if w then lines[#lines + 1] = ("%s (%s) = %s"):format(s.label, s.alias, w) end
         end
-        return
+        return FSB.Utils.Report(lines)
     end
     local key = FSB.Stats.FromAlias(alias)
     if not key then return Print(FSB.L.STAT_UNKNOWN:format(alias)) end
@@ -151,30 +155,52 @@ end
 
 function Commands.specs() FSB.Probe.AllSpecs() end
 
+-- /fsb log [vider|off|on] : affiche le journal des hésitations pour l'envoyer au développement.
+function Commands.log(rest)
+    if rest == "vider" then FSB.Log.Clear(); return Print(FSB.L.LOG_CLEARED) end
+    if rest == "off" then FSB.db.logDisabled = true; return Print(FSB.L.LOG_OFF) end
+    if rest == "on" then FSB.db.logDisabled = nil; return Print(FSB.L.LOG_ON) end
+    if FSB.UI and FSB.UI.ShowLog then FSB.UI.ShowLog(FSB.Log.Report()) else Print(FSB.Log.Report()) end
+end
+
+-- /fsb mauvais [commentaire] : signale que le verdict du dernier objet survolé est faux.
+function Commands.mauvais(rest)
+    if not FSB.lastLink then return Print(FSB.L.LOG_NOITEM) end
+    local verdict = FSB.lastVerdict
+    FSB.Log.Add("SIGNALE_MAUVAIS", { link = FSB.lastLink, verdict = verdict, detail = rest })
+    Print(FSB.L.LOG_FLAGGED)
+end
+
 function Commands.debug() FSB.Probe.Debug() end
 
 function Commands.sonde() FSB.Probe.Print() end
 
 function Commands.inconnus()
-    local any = false
-    for key in pairs(FSB.db.unknownStats) do any = true; Print(key) end
-    if not any then Print(FSB.L.NO_UNKNOWN) end
+    local lines = {}
+    for key in pairs(FSB.db.unknownStats) do lines[#lines + 1] = key end
+    table.sort(lines)
+    if #lines == 0 then lines[1] = FSB.L.NO_UNKNOWN end
+    FSB.Utils.Report(lines)
 end
 
 -- Diagnostic : état du contexte et du scan (utile pour les tests en jeu).
 function Commands.etat()
-    Print(FSB.L.STATE:format(FSB.Context.IsGroupMode() and "GROUPE" or "SOLO",
+    local lines = {}
+    local function add(text) lines[#lines + 1] = text end
+    add(FSB.L.STATE:format(FSB.Context.IsGroupMode() and "GROUPE" or "SOLO",
         FSB.Inspector.CountPending(), #FSB.Inspector.GetComparableMembers()))
     local spec = FSB.Spec.Current()
-    Print(FSB.L.STATE_SPEC:format(spec or "?", FSB.db.activeProfile, FSB.db.autoProfile and "auto" or "manuel"))
+    add(FSB.L.STATE_SPEC:format(spec or "?", FSB.db.activeProfile, FSB.db.autoProfile and "auto" or "manuel"))
     local info = spec and FSB.Spec.Info(spec)
-    Print(("Spé brute : détectée=%s manuelle=%s rôle=%s stat principale=%s"):format(
+    add(("Spé brute : détectée=%s manuelle=%s rôle=%s stat principale=%s"):format(
         tostring(FSB.Spec.Detect()), tostring(FSB.db.manualSpecID),
         tostring(info and info.role), tostring(info and info.primaryStat)))
-    FSB.Probe.Specs(Print)
+    add(FSB.L.LOG_COUNT:format(FSB.Log.Count()))
+    FSB.Probe.Specs(add)
     local names = {}
     for _, p in ipairs(FSB.Spec.OffspecProfiles()) do names[#names + 1] = p.name end
-    Print("Profils testés pour OFF-SPÉ : " .. table.concat(names, ", "))
+    add("Profils testés pour OFF-SPÉ : " .. table.concat(names, ", "))
+    FSB.Utils.Report(lines)
 end
 
 SLASH_FSB1 = "/fsb"

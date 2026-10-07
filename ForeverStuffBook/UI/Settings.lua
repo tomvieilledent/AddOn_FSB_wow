@@ -232,6 +232,40 @@ function UI.ShowRolePicker(force)
     roleFrame:Show()
 end
 
+-- Fenêtre de texte à copier (journal, diagnostics, aide).
+local logFrame
+function UI.ShowText(text)
+    local ok, err = pcall(function()
+        if not logFrame then
+            logFrame = CreateFrame("Frame", "FSBLogFrame", UIParent, "BackdropTemplate")
+            logFrame:SetSize(560, 380); logFrame:SetPoint("CENTER")
+            logFrame:SetBackdrop({ bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+                edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border", tile = true, tileSize = 32, edgeSize = 24,
+                insets = { left = 6, right = 6, top = 6, bottom = 6 } })
+            logFrame:SetFrameStrata("DIALOG")
+            logFrame:SetMovable(true); logFrame:EnableMouse(true); logFrame:RegisterForDrag("LeftButton")
+            logFrame:SetScript("OnDragStart", logFrame.StartMoving); logFrame:SetScript("OnDragStop", logFrame.StopMovingOrSizing)
+            tinsert(UISpecialFrames, "FSBLogFrame")
+            Label(logFrame, FSB.L.COPY_TITLE, 16, -14, "GameFontNormal")
+            CreateFrame("Button", nil, logFrame, "UIPanelCloseButton"):SetPoint("TOPRIGHT", -4, -4)
+            local scroll = CreateFrame("ScrollFrame", "FSBLogScroll", logFrame, "UIPanelScrollFrameTemplate")
+            scroll:SetPoint("TOPLEFT", 16, -40); scroll:SetPoint("BOTTOMRIGHT", -34, 16)
+            local edit = CreateFrame("EditBox", nil, scroll)
+            edit:SetMultiLine(true); edit:SetAutoFocus(false); edit:SetFontObject("ChatFontNormal")
+            edit:SetWidth(500)
+            edit:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+            scroll:SetScrollChild(edit)
+            logFrame.edit = edit
+        end
+        logFrame.edit:SetText(text)
+        logFrame:Show()
+        logFrame.edit:SetFocus(); logFrame.edit:HighlightText()
+    end)
+    if not ok then FSB.Utils.Print("UI : " .. tostring(err)) end
+end
+
+UI.ShowLog = UI.ShowText
+
 function UI.Toggle()
     local ok, err = pcall(function()
         if not frame then Build() end

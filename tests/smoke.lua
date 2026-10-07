@@ -59,6 +59,16 @@ SlashCmdList.FSB("debug")
 check("/fsb debug sans objet : pas d'erreur", true)
 FSB.lastLink = "ring"; FSB.Probe.skipTooltips = true; SlashCmdList.FSB("debug")
 check("/fsb debug stocke le détail", type(FSB.db.debug) == "table" and #FSB.db.debug > 3)
+local shown
+local realShow = FSB.UI.ShowText
+FSB.UI.ShowText = function(text) shown = text end
+SlashCmdList.FSB("etat")
+check("/fsb etat : fenêtre de texte, pas de chat", shown and shown:find("Mode :", 1, true))
+shown = nil; SlashCmdList.FSB("inconnus")
+check("/fsb inconnus : fenêtre de texte", shown ~= nil)
+shown = nil; SlashCmdList.FSB("aide")
+check("/fsb aide : fenêtre de texte", shown and shown:find("/fsb", 1, true))
+FSB.UI.ShowText = realShow
 SlashCmdList.FSB("specs")
 check("/fsb specs sans API : pas d'erreur", FSB.db.allSpecs ~= nil)
 SlashCmdList.FSB("sonde")

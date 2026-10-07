@@ -11,16 +11,21 @@ FSB.Analyzer = Analyzer
 
 local cache = { SOLO = {}, GROUP = {} }
 
+-- Le journal est facultatif : le moteur reste utilisable sans lui (tests).
+local function LogAdd(reason, data) if FSB.Log then FSB.Log.Add(reason, data) end end
+
 local function RecordUnknownStats(stats)
     local seen = FSB.db and FSB.db.unknownStats
-    local count = 0
+    local count, names = 0, {}
     for key in pairs(stats) do
         if not FSB.Stats.IsKnown(key) then
             count = count + 1
+            names[#names + 1] = key
             if seen then seen[key] = true end
         end
     end
-    return count
+    table.sort(names)
+    return count, table.concat(names, ",")
 end
 
 -- Libère-t-on les deux mains (2M) ou un seul emplacement ?
@@ -81,9 +86,11 @@ function Analyzer.Analyze(link, equipLoc)
 
     local stats = FSB.Compat.GetStats(link)
     if not stats then return nil end -- données pas encore chargées : pas de mise en cache
-    local unknownCount = RecordUnknownStats(stats)
+    local unknownCount, unknownNames = RecordUnknownStats(stats)
+    if unknownCount > 0 then LogAdd("STATS_INCONNUES", { link = link, detail = unknownNames }) end
 
     local usability = FSB.Compat.GetUsability(link)
+    if not usability then LogAdd("UTILISABILITE_ILLISIBLE", { link = link, global = true }) end
     if usability and usability.unusable then
         -- Inutilisable par le personnage : rien à comparer.
         local result = { kind = mode == "GROUP" and "CUPI" or "SELL", unusable = true }
@@ -95,7 +102,10 @@ function Analyzer.Analyze(link, equipLoc)
     local equipped = FSB.Compat.GetAllEquipped()
     -- Une pièce portée illisible fausserait la comparaison : pas de verdict, pas de cache.
     for _, slot in ipairs(FSB.Stats.RelatedSlots(equipLoc)) do
-        if equipped[slot] and equipped[slot].unreadable then return { kind = "UNKNOWN" } end
+        if equipped[slot] and equipped[slot].unreadable then
+            LogAdd("PIECE_PORTEE_ILLISIBLE", { link = link, detail = tostring(equipped[slot].link), verdict = "UNKNOWN" })
+            return { kind = "UNKNOWN" }
+        end
     end
     local newSetID = FSB.Compat.GetSetID(link)
     local setState = { link = link }
@@ -119,6 +129,8 @@ function Analyzer.Analyze(link, equipLoc)
     end
     if unknownCount > 0 then result.unknownStats = unknownCount end
     result.setNote = result.slot and setState.changeFor(result.slot) or nil
+    if result.setNote and result.setNote.partial then LogAdd("SET_PARTIEL", { link = link, verdict = result.kind }) end
+    if result.close then LogAdd("VERDICT_LIMITE", { link = link, verdict = result.kind }) end
     result.setSensitive = SetSensitive(equipped, equipLoc, newSetID)
 
     cache[mode][equipLoc] = cache[mode][equipLoc] or {}

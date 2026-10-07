@@ -28,7 +28,7 @@ _G.GetInventoryItemLink = function(u, slot) local g = world.group[u].gear; retur
 _G.C_SpecializationInfo = { GetInspectSpecialization = function(u) return world.group[u].specID or 0 end }
 _G.C_Timer = { NewTicker = function(_, fn) ticker = { fn = fn, cancelled = false, Cancel = function(self) self.cancelled = true end }; return ticker end }
 
-local FSB = H.load{ "Localization/frFR", "Utils/Utils", "Data/Stats", "Data/Profiles", "Core/Context",
+local FSB = H.load{ "Localization/frFR", "Utils/Utils", "Data/Stats", "Data/Profiles", "Core/Context", "Core/Log",
     "Engine/SpecEngine", "Core/Compat", "Core/Spec" }
 FSB.db = { specProfiles = {} }; FSB.Profiles.Init(FSB.db)
 local invalidations = 0

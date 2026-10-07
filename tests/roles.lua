@@ -2,7 +2,7 @@
 package.path = "tests/?.lua;" .. package.path
 local H = require("helpers")
 local FSB = H.load{ "Localization/frFR", "Utils/Utils", "Data/Stats", "Data/Profiles", "Data/Classes", "Core/Compat",
-    "Core/Context", "Engine/ScoreEngine", "Engine/EquipmentOptimizer", "Engine/SetBonusEngine",
+    "Core/Context", "Core/Log", "Engine/ScoreEngine", "Engine/EquipmentOptimizer", "Engine/SetBonusEngine",
     "Engine/SpecEngine", "Engine/VerdictEngine", "Engine/ItemAnalyzer", "Core/Spec" }
 local T = H.counter(); local check = T.check
 FSB.db = { autoProfile = true, specChoice = {}, specProfiles = {} }; FSB.Profiles.Init(FSB.db)

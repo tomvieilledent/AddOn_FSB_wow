@@ -78,6 +78,7 @@ local function AppendAnalysis(tooltip)
     FSB.lastLink = link
     local verdict = FSB.Analyzer.Analyze(link, equipLoc)
     if not verdict then return end
+    FSB.lastVerdict = verdict.kind
 
     -- Un bloc : espace, ligne de verdict (couleur + icône) avec la marque FSB à droite, puis détails.
     local c = COLORS[verdict.kind]

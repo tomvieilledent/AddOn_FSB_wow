@@ -105,6 +105,9 @@ local function StoreMember(guid, unit)
         specID = ReadSpec(unit), equipped = equipped,
         complete = complete or attempts >= MAX_ATTEMPTS, attempts = attempts,
     }
+    if not members[guid].specID then
+        FSB.Log.Add("SPE_MEMBRE_ILLISIBLE", { detail = tostring(members[guid].name) .. " classe=" .. tostring(members[guid].classID), global = true })
+    end
     FSB.Analyzer.InvalidateGroup()
 end
 

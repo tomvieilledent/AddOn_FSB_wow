@@ -66,9 +66,7 @@ function Probe.Run()
     return lines
 end
 
-function Probe.Print()
-    for _, l in ipairs(Probe.Run()) do FSB.Utils.Print(l) end
-end
+function Probe.Print() FSB.Utils.Report(Probe.Run()) end
 
 -- /fsb debug : raisonnement complet sur le dernier objet survolé (stats, objets portés, scores).
 local function StatList(stats)
@@ -121,7 +119,7 @@ function Probe.Debug()
     local verdict = equipLoc and FSB.Analyzer.Analyze(link, equipLoc)
     add("verdict : " .. tostring(verdict and verdict.kind) .. " slot=" .. tostring(verdict and verdict.slot))
     if FSB.db then FSB.db.debug = lines end
-    for _, l in ipairs(lines) do FSB.Utils.Print(l) end
+    FSB.Utils.Report(lines)
 end
 
 -- /fsb etat : liste brute des spécialisations de la classe et de la spé détectée.
@@ -181,5 +179,5 @@ function Probe.AllSpecs()
     end
     if #lines == 0 then add("aucune spécialisation lisible") end
     if FSB.db then FSB.db.allSpecs = lines end
-    for _, l in ipairs(lines) do FSB.Utils.Print(l) end
+    FSB.Utils.Report(lines)
 end

@@ -10,6 +10,12 @@ function Utils.Print(msg)
     print("|cff33ff99FSB|r: " .. tostring(msg))
 end
 
+-- Sortie multi-lignes : fenêtre de texte copiable (Ctrl+A, Ctrl+C) ; repli sur le chat sans interface.
+function Utils.Report(lines)
+    if FSB.UI and FSB.UI.ShowText then return FSB.UI.ShowText(table.concat(lines, "\n")) end
+    for _, l in ipairs(lines) do Utils.Print(l) end
+end
+
 -- Retourne l'emplacement d'équipement (ex. "INVTYPE_FINGER") ou nil si non équipable.
 -- Filtre peu coûteux, appliqué avant toute analyse.
 function Utils.GetEquipLoc(link)

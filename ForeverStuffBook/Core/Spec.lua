@@ -74,7 +74,9 @@ function Spec.NeedsChoice()
     local specID = Spec.Current()
     if not specID or not FSB.db.autoProfile then return false end
     if FSB.db.specChoice[specID] and FSB.Profiles.Find(FSB.db.specChoice[specID]) then return false end
-    return #Spec.Choices(specID) > 1
+    local ambiguous = #Spec.Choices(specID) > 1
+    if ambiguous then FSB.Log.Add("ROLE_AMBIGU", { detail = "spé " .. tostring(specID), global = true }) end
+    return ambiguous
 end
 
 -- Mémorise le rôle choisi pour la spé actuelle et applique le profil.

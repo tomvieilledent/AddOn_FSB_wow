@@ -27,7 +27,14 @@ local function Gain(ctx, equipped, profile, canDualWield, adjust)
     local delta, slot, replaced = FSB.Optimizer.Evaluate(
         ctx.equipLoc, ctx.stats, equipped, profile.weights, canDualWield, adjust)
     local newScore = FSB.ScoreEngine.Score(ctx.stats, profile.weights)
+    -- Cas limite : le gain est proche du seuil d'upgrade (entre 50 % et 150 % du minimum requis).
+    local close = false
+    if delta then
+        local need = math.max(Threshold("upgradeAbs"), Threshold("upgradeRel") * math.max(replaced or 0, 0))
+        close = delta >= need * 0.5 and delta < need * 1.5
+    end
     return {
+        close = close,
         upgrade = Verdict.IsUpgrade(delta, replaced),
         fraction = (delta and newScore > 0) and delta / newScore or 0,
         slot = slot,
@@ -39,7 +46,7 @@ end
 function Verdict.Solo(ctx)
     local function adjust(profile) return ctx.adjustFor and ctx.adjustFor(profile) or nil end
     local mine = Gain(ctx, ctx.equipped, ctx.active, ctx.canDualWield, adjust(ctx.active))
-    if mine.upgrade then return { kind = "EQUIP", slot = mine.slot, fraction = mine.fraction } end
+    if mine.upgrade then return { kind = "EQUIP", slot = mine.slot, fraction = mine.fraction, close = mine.close } end
 
     for _, profile in ipairs(ctx.profiles) do
         if profile ~= ctx.active then
@@ -47,7 +54,7 @@ function Verdict.Solo(ctx)
             if g.upgrade then return { kind = "OFFSPEC", profile = profile.name } end
         end
     end
-    return { kind = "SELL" }
+    return { kind = "SELL", close = mine.close }
 end
 
 -- Objet « fait pour » un membre : il porte un bonus d'école que le profil de ce membre valorise et pas
