@@ -127,6 +127,12 @@ end
 
 -- /fsb etat : liste brute des spécialisations de la classe et de la spé détectée.
 function Probe.Specs(add)
+    local function pack(...) return { n = select("#", ...), ... } end
+    local function show(t)
+        local out = {}
+        for i = 1, t.n do out[i] = tostring(t[i]) end
+        return table.concat(out, " | ")
+    end
     -- Lecture des talents telle que FSB l'utilise (ancien système puis C_Traits par positions).
     local trees = FSB.Spec.ReadTrees()
     if not trees then

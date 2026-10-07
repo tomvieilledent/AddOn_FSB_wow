@@ -78,6 +78,17 @@ check("/fsb rapport : toutes les sections en une fenêtre", shown and shown:find
     and shown:find("===== STATS INCONNUES", 1, true) and shown:find("===== POIDS DE TOUS LES PROFILS", 1, true)
     and shown:find("===== ENVIRONNEMENT", 1, true))
 FSB.UI.ShowText = realShow
+_G.C_SpecializationInfo = { GetNumSpecializationsForClassID = function() return 1 end,
+    GetSpecialization = function() return 1 end, GetSpecializationInfo = function() return 1487, "Prêtre", "", 626004, "DAMAGER", 4 end }
+_G.GetSpecializationInfoForClassID = function() return 1487, "Prêtre", "", 626004, "DAMAGER" end
+_G.GetSpecializationInfoForSpecID = function() return 1487, "Prêtre", "", 626004, "DAMAGER" end
+local keepShow = FSB.UI.ShowText
+FSB.UI.ShowText = function(text) shown = text end
+shown = nil; SlashCmdList.FSB("etat")
+FSB.UI.ShowText = keepShow
+check("/fsb etat : spés de la classe lues (pas d'erreur)", shown and shown:find("spé 1 : 1487", 1, true)
+    and shown:find("GetSpecializationInfo(index) : 1487", 1, true) and not shown:find(") : erreur", 1, true))
+_G.C_SpecializationInfo, _G.GetSpecializationInfoForClassID, _G.GetSpecializationInfoForSpecID = nil, nil, nil
 SlashCmdList.FSB("specs")
 check("/fsb specs sans API : pas d'erreur", FSB.db.allSpecs ~= nil)
 SlashCmdList.FSB("sonde")
