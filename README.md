@@ -1,5 +1,7 @@
 # Forever Stuff Book (FSB)
 
+Développé par **Koga / Fitaxal**.
+
 Addon **passif** pour WoW Forever (client 1.60.1, Interface `16001`, moteur 12.x) : il analyse un objet
 équipable (vert à orange) au survol et affiche un verdict dans le tooltip. **Le joueur décide et agit toujours.**
 

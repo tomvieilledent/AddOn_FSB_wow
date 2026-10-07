@@ -15,10 +15,15 @@ local function InitDB()
         end
     end
     FSB.db = ForeverStuffBookDB
-    if FSB.db.language and FSB.Locales[FSB.db.language] then FSB.language = FSB.db.language end
+    -- Langue : choix mémorisé, sinon celle du client (français si le client est en français, sinon anglais).
+    if FSB.db.language and FSB.Locales[FSB.db.language] then
+        FSB.language = FSB.db.language
+    else
+        FSB.language = (GetLocale and GetLocale() == "frFR") and "frFR" or "enUS"
+    end
     -- Le mode manuel n'existe plus : on nettoie les anciens réglages.
     FSB.db.manualSpecID, FSB.db.autoProfile, FSB.db.specPromptDone, FSB.db.specProfiles = nil, nil, nil, nil
-    FSB.build = (select(1, GetBuildInfo and GetBuildInfo() or "?") or "?") .. " v" .. (GetAddOnMetadata and GetAddOnMetadata(ADDON, "Version") or "?")
+    FSB.build = (select(1, GetBuildInfo and GetBuildInfo() or "?") or "?") .. " v" .. FSB.Utils.AddonVersion(ADDON)
     FSB.Profiles.Init(FSB.db)
 end
 

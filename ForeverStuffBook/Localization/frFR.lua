@@ -69,7 +69,12 @@ FSB.Locales.frFR = {
     ROLE_PICK_NOTE  = "Mémorisé pour cette spé (/fsb role pour changer).",
     ROLE_PICK_BTN   = "Mon rôle",
 
-    UI_TAB_GENERAL  = "Général",
+    UI_TAB_HOME     = "Accueil",
+    UI_TAB_SETTINGS = "Réglages",
+    HOME_DESC       = "Forever Stuff Book (FSB) est un assistant passif de décision d'équipement et de loot. Il analyse les objets équipables (vert à orange) quand tu les survoles et affiche un verdict dans leur tooltip. Il ne fait jamais d'action à ta place : tu décides et tu agis toujours.",
+    HOME_HOW        = "Comment ça marche\n\n• À ÉQUIPER / À PRENDRE : l'objet améliore ta configuration finale (anneaux, bijoux, armes et bonus de set inclus).\n• OFF-SPÉ : utile pour un autre rôle de ta classe.\n• MEILLEUR POUR UN AUTRE (en groupe) : plus utile à un autre membre du groupe.\n• VENDRE / DÉSENCHANTER / CUPI : sans intérêt pour toi.\n\nLe rôle suit tes talents. Une question n'est posée qu'en cas de doute (ex. prêtre Sacré : soin ou dégâts). Les poids des statistiques sont fixes et indicatifs.",
+    HOME_CREDITS    = "Développé par Koga / Fitaxal",
+    UI_TAB_GENERAL  = "Réglages",
     UI_TAB_STATS    = "Stats",
     UI_LANGUAGE     = "Langue",
     UI_STATS_NOTE   = "Onglet temporaire : poids du profil actif, en attendant l'équilibrage final.",

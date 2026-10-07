@@ -10,6 +10,14 @@ function Utils.Print(msg)
     print("|cff33ff99FSB|r: " .. tostring(msg))
 end
 
+-- Version de l'addon lue dans le .toc (API selon le client), ou "?".
+function Utils.AddonVersion(name)
+    local get = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
+    if not get then return "?" end
+    local ok, version = pcall(get, name, "Version")
+    return (ok and version) or "?"
+end
+
 -- Sortie multi-lignes : fenêtre de texte copiable (Ctrl+A, Ctrl+C) ; repli sur le chat sans interface.
 function Utils.Report(lines)
     if FSB.UI and FSB.UI.ShowText then return FSB.UI.ShowText(table.concat(lines, "\n")) end

@@ -1,8 +1,8 @@
 ## Interface: 16001
 ## Title: Forever Stuff Book
 ## Notes: Assistant passif de décision équipement/loot (FSB). Aucune action automatique.
-## Author: tomvieilledent
-## Version: 0.3.0
+## Author: Koga / Fitaxal
+## Version: 0.4.0
 ## SavedVariables: ForeverStuffBookDB
 
 Localization\frFR.lua

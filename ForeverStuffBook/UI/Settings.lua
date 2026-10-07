@@ -1,6 +1,6 @@
 local _, FSB = ...
 
--- Interface de configuration compacte (/fsb) : onglets Général et Stats. Construite à la première ouverture.
+-- Interface de configuration compacte (/fsb) : onglets Accueil, Réglages et Stats. Construite à la première ouverture.
 -- Toute erreur de construction est interceptée : l'interface ne doit jamais casser l'analyse.
 local UI = {}
 FSB.UI = UI
@@ -31,6 +31,14 @@ local function Label(parent, text, x, y, template)
     return fs
 end
 
+-- Paragraphe multi-lignes à retour automatique.
+local function Paragraph(parent, text, x, y, width, template)
+    local fs = Label(parent, text, x, y, template or "GameFontHighlight")
+    fs:SetWidth(width); fs:SetJustifyH("LEFT"); fs:SetJustifyV("TOP")
+    if fs.SetWordWrap then fs:SetWordWrap(true) end
+    return fs
+end
+
 local function Button(parent, text, w, x, y, onClick)
     local b = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
     b:SetSize(w, 22); b:SetPoint("TOPLEFT", x, y); b:SetText(Resolve(text, b))
@@ -56,6 +64,7 @@ function UI.Refresh()
     if not frame then return end
     frame.enabled:Refresh(); frame.icons:Refresh(); frame.details:Refresh()
     frame.status:SetText(FSB.Spec.Label())
+    frame.credits:SetText(FSB.L.HOME_CREDITS .. "   ·   v" .. FSB.Utils.AddonVersion(FSB.name or "ForeverStuffBook"))
     frame.langFR:SetEnabled(FSB.language ~= "frFR")
     frame.langEN:SetEnabled(FSB.language ~= "enUS")
     if frame.statsTab then
@@ -78,6 +87,14 @@ end
 ---------------------------------------------------------------------------------------------
 
 local TOP = -64 -- haut du contenu des onglets
+
+-- Page d'accueil : descriptif, fonctionnement et crédits.
+local function BuildHomeTab(tab)
+    Paragraph(tab, "HOME_DESC", 16, -4, WIDTH - 40)
+    Paragraph(tab, "HOME_HOW", 16, -96, WIDTH - 40, "GameFontNormalSmall")
+    frame.credits = tab:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    frame.credits:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 20, 18)
+end
 
 local function BuildGeneralTab(tab)
     frame.enabled = Check(tab, "UI_ENABLED", 12, -4,
@@ -131,9 +148,11 @@ local function Build()
         tab:SetPoint("TOPLEFT", 0, TOP); tab:SetPoint("BOTTOMRIGHT", 0, 0)
         return tab
     end
+    local home = NewTab()
+    BuildHomeTab(home)
     local general = NewTab()
     BuildGeneralTab(general)
-    local tabs = { general }
+    local tabs = { home, general }
     local buttons = {}
     local function Show(index)
         for i, t in ipairs(tabs) do
@@ -142,12 +161,13 @@ local function Build()
         end
         UI.Refresh()
     end
-    buttons[1] = Button(frame, "UI_TAB_GENERAL", 110, 16, -38, function() Show(1) end)
+    buttons[1] = Button(frame, "UI_TAB_HOME", 110, 16, -38, function() Show(1) end)
+    buttons[2] = Button(frame, "UI_TAB_GENERAL", 110, 132, -38, function() Show(2) end)
     if UI.SHOW_STATS_TAB then
         frame.statsTab = NewTab()
         BuildStatsTab(frame.statsTab)
-        tabs[2] = frame.statsTab
-        buttons[2] = Button(frame, "UI_TAB_STATS", 110, 132, -38, function() Show(2) end)
+        tabs[3] = frame.statsTab
+        buttons[3] = Button(frame, "UI_TAB_STATS", 110, 248, -38, function() Show(3) end)
     end
     Show(1)
     frame:Hide()

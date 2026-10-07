@@ -33,7 +33,9 @@ end
 local function files(p) local t = {}; for l in io.lines(p) do if l:match("%.lua$") then t[#t + 1] = l end end; return table.concat(t, "|") end
 check("TOC identiques", files("ForeverStuffBook/ForeverStuffBook.toc") == files("ForeverStuffBook/ForeverStuffBook_Camelot.toc"))
 
+_G.GetLocale = function() return "deDE" end
 handlers.onEvent(nil, "ADDON_LOADED", "ForeverStuffBook")
+check("client non français : interface en anglais par défaut", FSB.language == "enUS")
 check("schéma des SavedVariables à jour", FSB.db.schema == 4)
 check("SavedVariables initialisées", ForeverStuffBookDB and FSB.db.enabled and #FSB.db.profiles == 10)
 
@@ -66,7 +68,7 @@ local shown
 local realShow = FSB.UI.ShowText
 FSB.UI.ShowText = function(text) shown = text end
 SlashCmdList.FSB("etat")
-check("/fsb etat : fenêtre de texte, pas de chat", shown and shown:find("Mode :", 1, true))
+check("/fsb etat : fenêtre de texte, pas de chat", shown and shown:find("Mode", 1, true))
 shown = nil; SlashCmdList.FSB("inconnus")
 check("/fsb inconnus : fenêtre de texte", shown ~= nil)
 shown = nil; SlashCmdList.FSB("aide")
