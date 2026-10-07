@@ -104,14 +104,6 @@ function Commands.poids()
     FSB.Utils.Report(lines)
 end
 
-function Commands.set(rest)
-    local profile = FSB.Profiles.GetActive()
-    local value = tonumber(rest)
-    if not value then return Print(FSB.L.SET_VALUE:format(profile.setBonusValue or 0, profile.name)) end
-    FSB.Profiles.SetBonusValue(profile, value)
-    Print(FSB.L.SET_VALUE:format(value, profile.name))
-end
-
 function Commands.role() if FSB.UI and FSB.UI.ShowRolePicker then FSB.UI.ShowRolePicker(true) end end
 
 function Commands.specs() FSB.Probe.AllSpecs() end

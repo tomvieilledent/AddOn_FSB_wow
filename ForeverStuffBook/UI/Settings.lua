@@ -5,9 +5,9 @@ local _, FSB = ...
 local UI = {}
 FSB.UI = UI
 
-local WIDTH, HEIGHT = 440, 540
+local WIDTH, HEIGHT = 440, 450
 local frame
-local weightBoxes, thresholdBoxes = {}, {}
+local weightBoxes = {}
 
 local function Editing() return FSB.Profiles.GetActive() end
 
@@ -35,28 +35,6 @@ local function Check(parent, text, x, y, get, set)
     return c
 end
 
--- Champ numérique : valide à Entrée ou à la perte du focus. Texte vide = valeur par défaut/nil.
-local function NumberBox(parent, x, y, w, onValue)
-    local e = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
-    e:SetSize(w, 20); e:SetPoint("TOPLEFT", x, y); e:SetAutoFocus(false)
-    local function commit(self)
-        local text = self:GetText()
-        onValue(text ~= "" and tonumber(text) or nil)
-        self:ClearFocus()
-    end
-    e:SetScript("OnEnterPressed", commit)
-    e:SetScript("OnEditFocusLost", commit)
-    e:SetScript("OnEscapePressed", function(self) self:ClearFocus(); UI.Refresh() end)
-    return e
-end
-
-local function Threshold(name) return (FSB.db.thresholds and FSB.db.thresholds[name]) or FSB.Verdict.DEFAULT_THRESHOLDS[name] end
-local function SetThreshold(name, value)
-    FSB.db.thresholds = FSB.db.thresholds or {}
-    FSB.db.thresholds[name] = value
-    FSB.Analyzer.InvalidateAll()
-end
-
 ---------------------------------------------------------------------------------------------
 -- Rafraîchissement
 ---------------------------------------------------------------------------------------------
@@ -71,9 +49,6 @@ function UI.Refresh()
     for _, row in ipairs(weightBoxes) do
         row.box:SetText(active.weights[row.key] and tostring(active.weights[row.key]) or "-")
     end
-    thresholdBoxes.upgrade:SetText(tostring(math.floor(Threshold("upgradeRel") * 100 + 0.5)))
-    thresholdBoxes.margin:SetText(tostring(math.floor(Threshold("otherMargin") * 100 + 0.5)))
-    thresholdBoxes.setValue:SetText(tostring(active.setBonusValue or 0))
 end
 
 ---------------------------------------------------------------------------------------------
@@ -91,20 +66,6 @@ local function BuildWeights(parent, top)
         weightBoxes[#weightBoxes + 1] = { key = s.key, box = value }
     end
     return top - 22 - math.ceil(#FSB.Stats.KEYS / 2) * 22
-end
-
-local function BuildThresholds(parent, top)
-    local L = FSB.L
-    Label(parent, L.UI_THRESHOLDS, 16, top, "GameFontNormal")
-    local y = top - 22
-    Label(parent, L.UI_UPGRADE, 16, y - 4)
-    thresholdBoxes.upgrade = NumberBox(parent, 120, y, 50, function(v) if v then SetThreshold("upgradeRel", v / 100) end end)
-    Label(parent, L.UI_MARGIN, 190, y - 4)
-    thresholdBoxes.margin = NumberBox(parent, 290, y, 50, function(v) if v then SetThreshold("otherMargin", v / 100) end end)
-    Label(parent, L.UI_SETVALUE, 16, y - 28)
-    thresholdBoxes.setValue = NumberBox(parent, 150, y - 24, 60, function(v)
-        FSB.Profiles.SetBonusValue(Editing(), v or 0)
-    end)
 end
 
 local function Build()
@@ -133,8 +94,7 @@ local function Build()
     frame.status = Label(frame, "", 16, -68, "GameFontHighlightSmall")
     Button(frame, L.UI_PICK_ROLE, 130, 290, -62, function() UI.ShowRolePicker(true) end)
 
-    local y = BuildWeights(frame, -98)
-    BuildThresholds(frame, y - 10)
+    BuildWeights(frame, -98)
     frame:Hide()
 end
 

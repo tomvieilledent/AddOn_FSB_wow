@@ -28,7 +28,7 @@ Tests en jeu à effectuer : voir [`docs/TESTS_INGAME.md`](docs/TESTS_INGAME.md).
 ## Commandes
 
 `/fsb` (interface) · `on|off` · `role` · `profils` · `nouveau <nom>` · `supprimer <nom>` · `poids [<stat> <valeur>]` ·
-`set [<valeur>]` · `inconnus` · `etat` · `log` · `mauvais [texte]` · `debug` · `sonde` · `specs` · `aide`
+`inconnus` · `etat` · `log` · `mauvais [texte]` · `debug` · `sonde` · `specs` · `aide`
 (les sorties d'information s'ouvrent dans une fenêtre copiable)
 
 ## Moteur
@@ -38,14 +38,11 @@ Tests en jeu à effectuer : voir [`docs/TESTS_INGAME.md`](docs/TESTS_INGAME.md).
 - **Configuration finale** : anneaux/bijoux testés dans chaque emplacement ; une 2M est comparée à main + off ;
   une arme de main gauche est ignorée si une 2M est portée ; main gauche à une main seulement si
   `CanDualWield()`.
-- **Seuils** (`/fsb` → Seuils, ou `FSB.db.thresholds`) :
-  - `upgradeRel` (3 %) : gain minimal relatif à l'objet remplacé, et `upgradeAbs` (1 point) ;
-  - `otherMargin` (25 %) : en groupe, un autre membre doit gagner au moins 25 points de pourcentage de
-    la valeur de l'objet **de plus que moi** pour déclencher « meilleur pour un autre ». Évite le verdict
-    pour une petite différence.
-- **Sets** : les paliers gagnés/perdus sont détectés (lecture du tooltip, format localisé) et affichés.
-  Leur valeur n'est **jamais estimée** : elle ne compte dans le verdict que si l'utilisateur fixe
-  `/fsb set <valeur>` (0 par défaut). Paliers illisibles = « analyse partielle ».
+- **Seuils** (fixes, non réglables en jeu) : `upgradeRel` (3 %) et `upgradeAbs` (1 point) = gain minimal pour « à équiper » ;
+  `otherMargin` (25 %) : en groupe, un autre membre doit gagner au moins 25 points de pourcentage de la valeur de l'objet
+  de plus que moi pour « meilleur pour un autre » (évite le verdict pour une petite différence).
+- **Sets** : les paliers gagnés/perdus sont détectés (lecture du tooltip, format localisé) et affichés. Leur valeur n'est
+  **jamais estimée** : ils ne changent pas le verdict. Paliers illisibles = « analyse partielle ».
 - **Spécialisation** : lue automatiquement via l'API, sans mode manuel ; le profil actif suit toujours la spé. Si la
   spé a plusieurs rôles possibles (soin/dégâts, tank/dps), FSB pose la question une fois (mémorisée par spé).
   Un autre joueur dont la spé est illisible n'est **pas comparé**.
