@@ -6,6 +6,8 @@ FSB.L = {
     ANALYSIS_TITLE = "FSB",
     PROFILE        = "Profil",
     SPEC           = "Rôle",
+    LABEL_SPEC     = "Spé",
+    LABEL_CLASS    = "Classe",
     ENABLED        = "FSB activé",
     DISABLED       = "FSB désactivé",
 
@@ -68,7 +70,7 @@ FSB.L = {
     COPY_TITLE      = "Forever Stuff Book — Ctrl+A puis Ctrl+C pour copier",
     UI_ICONS        = "Icônes",
     UI_DETAILS      = "Détails",
-    UI_STATUS       = "Classe : %s · Rôle : %s",
+    UI_STATUS       = "%s",
     UI_PICK_ROLE    = "Mon rôle",
     ROLE_PICK_TITLE = "Que joues-tu avec %s ?",
     ROLE_PICK_NOTE  = "Mémorisé pour cette spé (/fsb role pour changer).",

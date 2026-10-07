@@ -64,7 +64,7 @@ end
 function UI.Refresh()
     if not frame then return end
     frame.enabled:Refresh(); frame.icons:Refresh(); frame.details:Refresh()
-    frame.status:SetText(FSB.L.UI_STATUS:format(FSB.Spec.Label()))
+    frame.status:SetText(FSB.Spec.Label())
     
 
     local active = Editing()

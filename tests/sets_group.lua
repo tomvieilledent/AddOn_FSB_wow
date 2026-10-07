@@ -21,8 +21,8 @@ check("profil associé à une spé gardé", names(SE.ClassProfiles(FSB.db.profil
 local custom = { name = "Farm", role = "DAMAGER", damage = "PHYSICAL", weights = {} }
 local withCustom = { HEAL, MAGE, PHYS, TANK, custom }
 check("profil utilisateur gardé", names(SE.ClassProfiles(withCustom, priest, builtin, HEAL.name, {})):find("Farm"))
-check("spé illisible : aucun filtre", #SE.ClassProfiles(FSB.db.profiles, { { role = "DAMAGER" } }, builtin, HEAL.name, {}) == 4)
-check("aucune info : aucun filtre", #SE.ClassProfiles(FSB.db.profiles, nil, builtin, HEAL.name, {}) == 4)
+check("spé illisible : aucun filtre", #SE.ClassProfiles(FSB.db.profiles, { { role = "DAMAGER" } }, builtin, HEAL.name, {}) == #FSB.db.profiles)
+check("aucune info : aucun filtre", #SE.ClassProfiles(FSB.db.profiles, nil, builtin, HEAL.name, {}) == #FSB.db.profiles)
 
 -- Profils fixes rechargés depuis le code ; la valeur de palier de set est conservée -------------------
 local saved = { profiles = { { name = "Soigneur", weights = { ITEM_MOD_SPELL_HEALING_DONE_SHORT = 1 }, setBonusValue = 77 } } }

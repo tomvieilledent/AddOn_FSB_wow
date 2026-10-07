@@ -67,12 +67,29 @@ function SpecEngine.FilterByNames(profiles, names, isBuiltin, activeName, chosen
     return kept
 end
 
--- Noms de profils possibles pour une spé : table par spé, sinon rôles de la classe. Seuls les profils existants.
-function SpecEngine.Choices(specID, classFile, bySpec, byClass, profiles)
-    local names = (bySpec and bySpec[specID]) or (byClass and byClass[classFile]) or {}
+-- Profils existants parmi une liste de noms.
+function SpecEngine.ByNames(names, profiles)
     local list = {}
-    for _, n in ipairs(names) do
+    for _, n in ipairs(names or {}) do
         for _, p in ipairs(profiles) do if p.name == n then list[#list + 1] = p; break end end
     end
     return list
+end
+
+-- Noms de profils possibles pour une spé : table par spé, sinon rôles de la classe. Seuls les profils existants.
+function SpecEngine.Choices(specID, classFile, bySpec, byClass, profiles)
+    return SpecEngine.ByNames((bySpec and bySpec[specID]) or (byClass and byClass[classFile]), profiles)
+end
+
+-- Arbre de talents actif = celui qui a le plus de points investis. trees : { { name, points } }.
+-- Retourne (index, nom) ou nil si aucun point ou égalité (aucune devinette).
+function SpecEngine.ActiveTree(trees)
+    if type(trees) ~= "table" then return nil end
+    local best, bestPoints, tie = nil, 0, false
+    for i, t in ipairs(trees) do
+        if t.points > bestPoints then best, bestPoints, tie = i, t.points, false
+        elseif t.points == bestPoints and bestPoints > 0 then tie = true end
+    end
+    if not best or tie then return nil end
+    return best, trees[best].name
 end

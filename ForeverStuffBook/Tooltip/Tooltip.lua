@@ -59,7 +59,7 @@ local function AddDetails(tooltip, verdict)
     if verdict.unscanned and verdict.unscanned > 0 then
         tooltip:AddLine(L.UNSCANNED:format(verdict.unscanned), unpack(GREY))
     end
-    tooltip:AddLine(L.SPEC .. " : " .. table.concat({ FSB.Spec.Label() }, " · "), unpack(GREY))
+    tooltip:AddLine(FSB.Spec.Label(), unpack(GREY))
 end
 
 local function AppendAnalysis(tooltip)

@@ -23,3 +23,5 @@ Next action : API SPECIALIST pour chaque ligne, après récupération de la sort
 | Classe/armure/arme équipables par le personnage | (absent) | Quelle API ? | Verdicts erronés |
 
 | API de talents (arbre, rang) du joueur et des autres | (absent) | Quelle API existe sur Forever ? (`/fsb etat` liste les fonctions *Talent*) | Pas de spé réelle ni de rôle des autres |
+| `GetNumTalentTabs`, `GetTalentTabInfo` (disposition du retour), événements `PLAYER_TALENT_UPDATE`/`CHARACTER_POINTS_CHANGED` | Spec (arbre actif) | Présents ? Quel retour ? | Pas de spé réelle ; retour à la question de rôle |
+| Ordre des arbres par classe (Classes.TREES) | Spec | Même ordre que Classic ? | Mauvais rôle proposé |

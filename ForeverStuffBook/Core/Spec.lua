@@ -58,18 +58,52 @@ end
 
 local function ClassFile() return select(2, UnitClass("player")) end
 
--- Profils possibles pour la spé actuelle (liste d'objets profil).
+-- Points investis par arbre de talents : { { name, points } } ou nil si l'API est absente/illisible.
+-- Deux dispositions de GetTalentTabInfo sont reconnues (Classic : nom, icône, points ; moderne : id, nom,
+-- description, icône, points) — UNVERIFIED sur Forever, voir /fsb etat.
+function Spec.ReadTrees()
+    if not GetNumTalentTabs or not GetTalentTabInfo then return nil end
+    local ok, n = pcall(GetNumTalentTabs)
+    if not ok or type(n) ~= "number" or n < 1 then return nil end
+    local trees = {}
+    for i = 1, n do
+        local okT, a, b, c, d, e = pcall(GetTalentTabInfo, i)
+        local name, points
+        if okT and type(a) == "string" then name, points = a, c
+        elseif okT and type(a) == "number" and type(b) == "string" then name, points = b, e end
+        if type(points) ~= "number" then return nil end
+        trees[i] = { name = name, points = points }
+    end
+    return trees
+end
+
+-- (index, nom) de l'arbre de talents le plus investi, ou nil (API absente, aucun point, égalité).
+function Spec.ActiveTree()
+    return FSB.SpecEngine.ActiveTree(Spec.ReadTrees())
+end
+
+-- Clé de mémorisation du choix : classe détectée + arbre actif.
+function Spec.Key(specID)
+    local tree = Spec.ActiveTree()
+    return tostring(specID) .. ":" .. tostring(tree or 0)
+end
+
+-- Profils possibles : table par spé, sinon selon l'arbre actif, sinon rôles de la classe.
 function Spec.Choices(specID)
-    return FSB.SpecEngine.Choices(specID, ClassFile(), FSB.Classes.BY_SPEC, FSB.Classes.ROLES, FSB.Profiles.List())
+    local tree = Spec.ActiveTree()
+    local byTree = tree and FSB.Classes.TREES[ClassFile() or ""]
+    local names = FSB.Classes.BY_SPEC[specID] or (byTree and byTree[tree]) or FSB.Classes.ROLES[ClassFile() or ""]
+    return FSB.SpecEngine.ByNames(names, FSB.Profiles.List())
 end
 
 -- Vrai si la spé a plusieurs rôles possibles et que l'utilisateur n'a pas encore choisi.
 function Spec.NeedsChoice()
     local specID = Spec.Current()
     if not specID then return false end
-    if FSB.db.specChoice[specID] and FSB.Profiles.Find(FSB.db.specChoice[specID]) then return false end
+    local chosen = FSB.db.specChoice[Spec.Key(specID)]
+    if chosen and FSB.Profiles.Find(chosen) then return false end
     local ambiguous = #Spec.Choices(specID) > 1
-    if ambiguous then FSB.Log.Add("ROLE_AMBIGU", { detail = "spé " .. tostring(specID), global = true }) end
+    if ambiguous then FSB.Log.Add("ROLE_AMBIGU", { detail = "clé " .. Spec.Key(specID), global = true }) end
     return ambiguous
 end
 
@@ -77,18 +111,18 @@ end
 function Spec.Choose(profileName)
     local specID = Spec.Current()
     if not specID or not FSB.Profiles.Find(profileName) then return false end
-    FSB.db.specChoice[specID] = profileName
+    FSB.db.specChoice[Spec.Key(specID)] = profileName
     FSB.Profiles.SetActive(profileName)
     return true
 end
 
--- Applique le profil de la spé si le mode auto est actif : choix mémorisé, sinon rôle unique possible,
--- sinon (rôles multiples) le profil reste inchangé en attendant le choix (Spec.NeedsChoice).
+-- Applique le profil de la spé : choix mémorisé, sinon rôle unique possible, sinon (rôles multiples) le profil
+-- reste inchangé en attendant le choix (Spec.NeedsChoice).
 -- Retourne false si aucune spé n'est détectée (journalisé : la détection doit fonctionner).
 function Spec.Apply()
     local specID = Spec.Current()
     if not specID then return false end
-    local name = FSB.db.specChoice[specID]
+    local name = FSB.db.specChoice[Spec.Key(specID)]
     if not (name and FSB.Profiles.Find(name)) then
         local choices = Spec.Choices(specID)
         if #choices == 1 then
@@ -116,10 +150,14 @@ function Spec.OffspecProfiles()
         FSB.db.activeProfile, FSB.db.specChoice)
 end
 
--- Libellé de la spé active : « Prêtre · Soigneur ». Forever n'expose qu'une spé par classe : le nom vient
--- de l'API, le rôle du profil actif (choix mémorisé). Les écoles/arbres de talents ne sont pas encore lus.
+-- Libellé : « Spé : Prêtre · Sacré · Soigneur » si l'arbre de talents est lisible, sinon « Classe : Prêtre · Soigneur ».
 function Spec.Label()
     local specID = Spec.Current()
     local info = specID and SpecInfo(specID)
-    return (info and info.name) or "?", FSB.db.activeProfile or "?"
+    local _, treeName = Spec.ActiveTree()
+    local class = (info and info.name) or "?"
+    local parts = { class }
+    if treeName then parts[#parts + 1] = treeName end
+    parts[#parts + 1] = FSB.db.activeProfile or "?"
+    return (treeName and FSB.L.LABEL_SPEC or FSB.L.LABEL_CLASS) .. " : " .. table.concat(parts, " · ")
 end

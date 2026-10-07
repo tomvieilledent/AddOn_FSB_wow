@@ -59,6 +59,10 @@ local handlers = {
     PLAYER_SPECIALIZATION_CHANGED = function(unit)
         if unit == nil or unit == "player" then FSB.Spec.Apply(); FSB.Spec.PromptIfNeeded() end
     end,
+    -- Changement de talents : l'arbre actif (donc le rôle possible) peut changer. Événements Classic/moderne ;
+    -- ceux qui n'existent pas sur Forever sont ignorés à l'enregistrement.
+    PLAYER_TALENT_UPDATE = function() FSB.Spec.Apply(); FSB.Spec.PromptIfNeeded(); FSB.Analyzer.InvalidateAll() end,
+    CHARACTER_POINTS_CHANGED = function() FSB.Spec.Apply(); FSB.Spec.PromptIfNeeded(); FSB.Analyzer.InvalidateAll() end,
     ACTIVE_PLAYER_SPECIALIZATION_CHANGED = function() FSB.Spec.Apply(); FSB.Spec.PromptIfNeeded() end,
 }
 
@@ -69,7 +73,7 @@ frame:SetScript("OnEvent", function(_, event, arg1)
         if arg1 ~= ADDON then return end
         InitDB()
         frame:UnregisterEvent("ADDON_LOADED")
-        for name in pairs(handlers) do frame:RegisterEvent(name) end
+        for name in pairs(handlers) do pcall(frame.RegisterEvent, frame, name) end
         FSB.Utils.Print(FSB.L.ADDON_LOADED)
         return
     end

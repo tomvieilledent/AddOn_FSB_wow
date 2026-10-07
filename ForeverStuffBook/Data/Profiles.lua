@@ -28,6 +28,22 @@ local DEFAULTS = {
         ITEM_MOD_STRENGTH_SHORT = 40, ITEM_MOD_AGILITY_SHORT = 50, ITEM_MOD_EXPERTISE_RATING_SHORT = 40 } },
 }
 
+-- Profils de lanceur d'une seule école : poids de « Dégâts magiques » avec l'école visée à 100 et les autres à 0.
+local MAGIC_WEIGHTS = DEFAULTS[2].weights
+local SCHOOL_PROFILES = {
+    { "Dégâts Ombre", "ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT" }, { "Dégâts Feu", "ITEM_MOD_FIRE_DAMAGE_DONE_SHORT" },
+    { "Dégâts Givre", "ITEM_MOD_FROST_DAMAGE_DONE_SHORT" }, { "Dégâts Nature", "ITEM_MOD_NATURE_DAMAGE_DONE_SHORT" },
+    { "Dégâts Arcanes", "ITEM_MOD_ARCANE_DAMAGE_DONE_SHORT" }, { "Dégâts Sacré", "ITEM_MOD_HOLY_DAMAGE_DONE_SHORT" },
+}
+for _, entry in ipairs(SCHOOL_PROFILES) do
+    local weights = {}
+    for key, w in pairs(MAGIC_WEIGHTS) do
+        if not key:find("_DAMAGE_DONE_SHORT$") or key == "ITEM_MOD_SPELL_DAMAGE_DONE_SHORT" then weights[key] = w end
+    end
+    weights[entry[2]] = 100
+    DEFAULTS[#DEFAULTS + 1] = { name = entry[1], role = "DAMAGER", damage = "MAGIC", school = entry[2], weights = weights }
+end
+
 local function Copy(t)
     local c = {}
     for k, v in pairs(t) do c[k] = type(v) == "table" and Copy(v) or v end

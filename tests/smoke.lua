@@ -35,7 +35,7 @@ check("TOC identiques", files("ForeverStuffBook/ForeverStuffBook.toc") == files(
 
 handlers.onEvent(nil, "ADDON_LOADED", "ForeverStuffBook")
 check("schéma des SavedVariables à jour", FSB.db.schema == 4)
-check("SavedVariables initialisées", ForeverStuffBookDB and FSB.db.enabled and #FSB.db.profiles == 4)
+check("SavedVariables initialisées", ForeverStuffBookDB and FSB.db.enabled and #FSB.db.profiles == 10)
 
 local tt = { n = {}, GetItem = function(s) return "x", s.link end,
     AddLine = function(s, t) s.n[#s.n + 1] = t end, AddDoubleLine = function(s, t) s.n[#s.n + 1] = t end, Show = function() end }
