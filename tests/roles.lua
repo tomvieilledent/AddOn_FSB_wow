@@ -60,29 +60,45 @@ _G.GetTalentTabInfo = function(i) return 100 + i, names[i], "desc", "icone", poi
 check("disposition moderne reconnue", select(2, FSB.Spec.ActiveTree()) == "Givre")
 _G.GetNumTalentTabs, _G.GetTalentTabInfo = nil, nil
 check("API de talents absente : pas d'arbre", FSB.Spec.ActiveTree() == nil)
--- Système moderne (C_Traits) : points regroupés par groupIDs
+-- Système moderne (C_Traits) : trois arbres côte à côte, lus par position (données réelles d'un prêtre)
 classFile = "PRIEST"; detected = 1487
-local nodes = { [1] = { 11, 3 }, [2] = { 11, 2 }, [3] = { 12, 6 }, [4] = { 13, 0 }, [5] = { 13, 0 } }
+local nodes = {
+    { 1620, 3330, 3 }, { 2220, 2730, 2 },                 -- Discipline (x 1020..2820)
+    { 5020, 3330, 6 }, { 6220, 2130, 0 }, { 9280, 21300, 0 }, -- Sacré (x 5020..6820) + nœud aberrant (y 21300)
+    { 9680, 3930, 0 }, { 10280, 5130, 0 },                 -- Ombre (x 9080..10880)
+}
+local groups = { 11, 11, 12, 12, 12, 13, 13 }
+local withPositions = true
 _G.C_ClassTalents = { GetActiveConfigID = function() return 99 end }
 _G.C_Traits = {
     GetConfigInfo = function() return { treeIDs = { 7 } } end,
-    GetTreeNodes = function() return { 1, 2, 3, 4, 5 } end,
-    GetNodeInfo = function(_, id) return { groupIDs = { nodes[id][1] }, currentRank = nodes[id][2] } end,
+    GetTreeNodes = function() local ids = {}; for i = 1, #nodes do ids[i] = i end; return ids end,
+    GetNodeInfo = function(_, id)
+        local n = nodes[id]
+        return { posX = withPositions and n[1] or nil, posY = withPositions and n[2] or nil,
+            groupIDs = { groups[id] }, currentRank = n[3] }
+    end,
 }
 FSB.db.specChoice = {}
 local idx, tname = FSB.Spec.ActiveTree()
-check("C_Traits : arbre actif = groupe avec le plus de points", idx == 2 and tname == "Sacré")
+check("C_Traits : arbre actif = bande avec le plus de points", idx == 2 and tname == "Sacré")
 check("C_Traits : libellé avec la spé", FSB.Spec.Label():find("Spé : ", 1, true) and FSB.Spec.Label():find("Sacré", 1, true))
 check("C_Traits : prêtre Sacré -> question soin/dégâts Sacré", FSB.Spec.NeedsChoice() and #FSB.Spec.Choices(1487) == 2)
-nodes[1], nodes[2] = { 11, 0 }, { 11, 0 }
-nodes[4] = { 13, 9 }
+nodes[1][3], nodes[2][3], nodes[3][3] = 13, 0, 0
+check("C_Traits : 13 points en Discipline -> Discipline", select(2, FSB.Spec.ActiveTree()) == "Discipline")
+nodes[1][3], nodes[6][3] = 0, 9
 check("C_Traits : Ombre -> profil Dégâts Ombre sans question", select(2, FSB.Spec.ActiveTree()) == "Ombre"
     and (FSB.Spec.Apply() or true) and FSB.db.activeProfile == "Dégâts Ombre" and not FSB.Spec.NeedsChoice())
-nodes[4], nodes[5] = { 14, 0 }, { 15, 0 }
-check("C_Traits : nombre de groupes inattendu -> aucune devinette", FSB.Spec.ActiveTree() == nil)
-nodes[4], nodes[5] = { 13, 0 }, { 13, 0 }
-nodes[1], nodes[2], nodes[3] = { 11, 4 }, { 12, 4 }, { 13, 4 }
+nodes[5][3] = 50 -- le nœud aberrant (y=21300) ne compte jamais
+check("C_Traits : nœud à position aberrante ignoré", select(2, FSB.Spec.ActiveTree()) == "Ombre")
+nodes[5][3] = 0
+nodes[7] = { 15000, 3930, 0 }
+check("C_Traits : nombre de bandes inattendu -> aucune devinette", FSB.Spec.ActiveTree() == nil)
+nodes[7] = { 10280, 5130, 0 }
+nodes[1][3], nodes[3][3], nodes[6][3] = 4, 4, 4
 check("C_Traits : égalité -> aucune devinette", FSB.Spec.ActiveTree() == nil)
+withPositions = false; nodes[1][3], nodes[3][3], nodes[6][3] = 0, 5, 0
+check("C_Traits : sans positions, repli sur groupIDs", select(2, FSB.Spec.ActiveTree()) == "Sacré")
 _G.C_ClassTalents, _G.C_Traits = nil, nil
 FSB.db.specChoice = {}; detected = nil
 check("spé non détectée : aucune question ni changement", not FSB.Spec.NeedsChoice() and FSB.Spec.Apply() == false)

@@ -51,3 +51,10 @@ Addon passif : aucune action de jeu, aucune simulation d'entrée, aucune API pro
 - Clés de stats supplémentaires : `ITEM_MOD_SPELL_POWER_SHORT` (soins + dégâts), `ITEM_MOD_DAMAGE_PER_SECOND_SHORT` (DPS d'arme).
 - Libellé du jeu `ITEM_MOD_MANA_REGENERATION` = « Rend %s points de mana toutes les 5 secondes. » (%s, pas %d).
 - Les noms de sorts des talents achetés (`/fsb etat`, lignes TRAITS) restent à lire pour relier l'arbre à Sacré/Discipline/Ombre : UNVERIFIED.
+
+## Arbre de talents d'un prêtre niveau 23 (VERIFIED, /fsb rapport v0.4.0)
+- Config active 11051557, un seul arbre (1114) de 54 nœuds = les trois arbres classiques, côte à côte :
+  Discipline `posX` 1020..2820, Sacré 5020..6820, Ombre 9080..10880 (colonnes de 600, `posY` 2130..5730).
+- Un nœud « Spécialisation (Sacré) » (105865) a `posY` = 21300 : ignoré (position aberrante).
+- 13 points investis (5 talents) en Discipline pour un niveau 23. Les noms de sorts sont lisibles (localisés).
+- Autres classes : même disposition supposée (UNVERIFIED) ; FSB n'accepte la lecture que si le nombre d'arbres trouvés égale celui attendu.

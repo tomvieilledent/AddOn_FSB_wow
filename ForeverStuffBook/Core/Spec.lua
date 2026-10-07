@@ -58,36 +58,57 @@ end
 
 local function ClassFile() return select(2, UnitClass("player")) end
 
--- Points investis par arbre de talents, système moderne (C_Traits) : les nœuds de la configuration active sont
--- regroupés par `groupIDs` ; chaque groupe correspond à un arbre classique, dans l'ordre croissant des identifiants
--- (= ordre des onglets). Les groupes ne sont acceptés que s'ils sont aussi nombreux que les arbres connus de la
--- classe (aucune devinette sinon). UNVERIFIED sur Forever : voir le rapport (/fsb rapport, lignes TRAITS).
+-- Points investis par arbre de talents, système moderne (C_Traits). Les trois arbres classiques sont rangés côte à
+-- côte dans une même arborescence (VERIFIED sur un prêtre : Discipline x=1020..2820, Sacré x=5020..6820,
+-- Ombre x=9080..10880) : l'arbre d'un nœud se lit donc à sa position horizontale (bandes de 4000). Les nœuds à
+-- position verticale aberrante (> 8000, ex. « Spécialisation (Sacré) » à y=21300) sont ignorés. Repli : regroupement
+-- par `groupIDs`. Dans les deux cas, le nombre d'arbres trouvés doit égaler celui des arbres connus de la classe
+-- (aucune devinette sinon).
+local BAND_WIDTH, MAX_Y = 4000, 8000
+
 local function ReadTraitTrees()
     if not C_ClassTalents or not C_Traits then return nil end
     local ok, configID = pcall(function() return C_ClassTalents.GetActiveConfigID() end)
     if not ok or not configID then return nil end
     local okC, cfg = pcall(function() return C_Traits.GetConfigInfo(configID) end)
     if not okC or type(cfg) ~= "table" or type(cfg.treeIDs) ~= "table" then return nil end
-    local points, order = {}, {}
+
+    local byBand, byGroup = {}, {}
     for _, treeID in ipairs(cfg.treeIDs) do
         local okN, nodes = pcall(function() return C_Traits.GetTreeNodes(treeID) end)
         if not okN or type(nodes) ~= "table" then return nil end
         for _, nodeID in ipairs(nodes) do
             local okI, info = pcall(function() return C_Traits.GetNodeInfo(configID, nodeID) end)
-            local group = okI and type(info) == "table" and type(info.groupIDs) == "table" and info.groupIDs[1]
-            if group then
-                if points[group] == nil then points[group] = 0; order[#order + 1] = group end
-                points[group] = points[group] + (tonumber(info.currentRank) or 0)
+            if okI and type(info) == "table" then
+                local rank = tonumber(info.currentRank) or 0
+                local x, y = tonumber(info.posX), tonumber(info.posY)
+                if x and y and y <= MAX_Y then
+                    local band = math.floor(x / BAND_WIDTH)
+                    byBand[band] = (byBand[band] or 0) + rank
+                end
+                local group = type(info.groupIDs) == "table" and info.groupIDs[1]
+                if group then byGroup[group] = (byGroup[group] or 0) + rank end
             end
         end
     end
-    table.sort(order)
-    local known = FSB.Classes.TREES[select(2, UnitClass("player")) or ""]
-    if not known or #order ~= #known then return nil end
-    local names = FSB.L.TREE_NAMES and FSB.L.TREE_NAMES[select(2, UnitClass("player"))]
-    local trees = {}
-    for i, group in ipairs(order) do trees[i] = { name = (names and names[i]) or ("#" .. i), points = points[group] } end
-    return trees
+
+    local classFile = select(2, UnitClass("player"))
+    local known = FSB.Classes.TREES[classFile or ""]
+    if not known then return nil end
+    local names = FSB.L.TREE_NAMES and FSB.L.TREE_NAMES[classFile]
+    -- Positions disponibles : elles seules décident (un nombre de bandes inattendu = aucune lecture). Sinon : groupes.
+    local source = next(byBand) and byBand or byGroup
+    do
+        local keys = {}
+        for key in pairs(source) do keys[#keys + 1] = key end
+        table.sort(keys)
+        if #keys == #known then
+            local trees = {}
+            for i, key in ipairs(keys) do trees[i] = { name = (names and names[i]) or ("#" .. i), points = source[key] } end
+            return trees
+        end
+    end
+    return nil
 end
 
 -- Points investis par arbre : { { name, points } } ou nil si aucune API de talents lisible.
