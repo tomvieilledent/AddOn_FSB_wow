@@ -141,6 +141,8 @@ function Commands.specprofil(rest)
     if FSB.Spec.MapCurrentTo(rest) then Print(FSB.L.SPEC_MAPPED:format(rest)) else Print(FSB.L.PROFILE_UNKNOWN:format(rest)) end
 end
 
+function Commands.sonde() FSB.Probe.Print() end
+
 function Commands.inconnus()
     local any = false
     for key in pairs(FSB.db.unknownStats) do any = true; Print(key) end

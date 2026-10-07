@@ -19,6 +19,7 @@ Engine\VerdictEngine.lua
 Engine\ItemAnalyzer.lua
 Core\Spec.lua
 Core\Inspector.lua
+Core\Probe.lua
 UI\Settings.lua
 Core\Core.lua
 Tooltip\Tooltip.lua

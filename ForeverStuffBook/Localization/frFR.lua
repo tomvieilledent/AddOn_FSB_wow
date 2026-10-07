@@ -34,6 +34,7 @@ FSB.L = {
         "/fsb nouveau <nom> : crée un profil (copie du profil actif)",
         "/fsb supprimer <nom> : supprime un profil",
         "/fsb poids [<stat> <valeur>] : affiche ou modifie les poids du profil actif",
+        "/fsb sonde : vérifie les API en jeu (lecture seule)",
         "/fsb inconnus : stats rencontrées et non reconnues",
     },
     PROFILE_ACTIVE  = "Profil actif : %s",
