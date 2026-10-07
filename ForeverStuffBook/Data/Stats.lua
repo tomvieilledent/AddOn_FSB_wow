@@ -46,6 +46,7 @@ Stats.IGNORED = {
     RESISTANCE1_NAME = true, RESISTANCE2_NAME = true, RESISTANCE3_NAME = true,
     RESISTANCE4_NAME = true, RESISTANCE5_NAME = true, RESISTANCE6_NAME = true,
     ITEM_MOD_HEALTH_REGEN_SHORT = true,
+    ITEM_MOD_MINING_SHORT = true, -- bonus de métier (vu sur une cape de mineur)
 }
 
 -- Bonus d'école : ne profitent qu'aux sorts de cette école (ITEM_MOD_SPELL_DAMAGE_DONE_SHORT les couvre toutes).

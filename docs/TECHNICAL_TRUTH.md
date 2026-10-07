@@ -72,3 +72,12 @@ Addon passif : aucune action de jeu, aucune simulation d'entrée, aucune API pro
 - `CanInspect` = true pour tous ; `UnitIsVisible` = false pour les membres hors de portée (non scannés).
 - Inspection : équipement lu pour les membres visibles ; un membre `TANK` explicite est comparé avec le profil Tank, un paladin `DAMAGER` n'est pas comparé.
 - Clé de stat supplémentaire : `ITEM_MOD_ATTACK_POWER_VS_HUMANOID_SHORT` (bonus contre un type de créature, hors score).
+
+## Rapports du 2026-10-07/08 (prêtre niv. 23 et 25, guerrier niv. 8)
+- **Arbre de talents d'un guerrier (VERIFIED)** : config 11440127, arbre 1117 de 52 nœuds, trois bandes comme le prêtre :
+  Armes x=1020..2820, Fureur 5020..6820, Protection 9080..10880. La lecture par position fonctionne donc pour 2 classes (prêtre, guerrier).
+  À niveau 8 (0 point), aucun arbre actif : le rôle (Tank / dégâts physiques) est demandé.
+- `GetShapeshiftFormID()` d'un guerrier = 17 (posture de combat). Non utilisé pour l'instant.
+- **Groupe à 5 en donjon (VERIFIED)** : 4 membres inspectés et comparés : démoniste et mage (classe à un seul rôle -> « Dégâts magiques »),
+  druide et paladin marqués `TANK` (-> « Tank »). Aucun membre en attente.
+- Stat de métier : `ITEM_MOD_MINING_SHORT` (hors score).
