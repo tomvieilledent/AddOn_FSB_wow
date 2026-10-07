@@ -6,10 +6,23 @@ local T = H.counter(); local check = T.check
 local printed = {}
 _G.print = function(s) printed[#printed + 1] = s end
 local handlers, hooks = {}, {}
-_G.CreateFrame = function()
-    return setmetatable({ RegisterEvent = function() end, UnregisterEvent = function() end,
-        SetScript = function(self, _, f) handlers.onEvent = f end }, { __index = function() return function() end end })
+-- Maquette graphique : tout objet renvoyé par Create* est lui-même une maquette, pour que la construction de
+-- l'interface s'exécute réellement (une erreur y est signalée par « FSB: UI : ... »).
+local function widget()
+    local w
+    w = setmetatable({}, { __index = function(_, name)
+        return function(self, ...)
+            if name == "SetScript" then handlers.onEvent = handlers.onEvent or select(2, ...) end
+            if name:sub(1, 6) == "Create" or name == "GetChildren" then return widget() end
+            if name == "IsShown" then return false end
+            if name == "GetText" then return "" end
+        end
+    end })
+    return w
 end
+_G.CreateFrame = function(_, _, _, _) return widget() end
+_G.UIParent = widget(); _G.UISpecialFrames = {}; _G.tinsert = table.insert
+_G.wipe = function(t) for k in pairs(t) do t[k] = nil end end
 _G.SlashCmdList = {}
 _G.C_Timer = { After = function(_, f) end, NewTicker = function() return { Cancel = function() end } end }
 _G.IsInInstance = function() return false, "none" end
@@ -118,5 +131,9 @@ local t3 = { n = {}, GetItem = function() return "x", "ring" end,
     AddLine = function(s, t) s.n[#s.n + 1] = t end, AddDoubleLine = function(s, t) s.n[#s.n + 1] = t end, Show = function() end }
 hooks.tooltip(t3)
 check("options : sans icône ni détails", #t3.n == 3 and not t3.n[2]:find("|T", 1, true))
-SlashCmdList.FSB("")
+SlashCmdList.FSB(""); SlashCmdList.FSB("")  -- ouvre puis ferme la fenêtre : construction réelle de l'interface
+FSB.UI.ShowRolePicker(); FSB.UI.ShowText("test")
+local uiErrors = {}
+for _, line in ipairs(printed) do if tostring(line):find("UI : ", 1, true) then uiErrors[#uiErrors + 1] = line end end
+check("interface : aucune erreur de construction" .. (uiErrors[1] and (" -> " .. uiErrors[1]) or ""), #uiErrors == 0)
 T.finish("chargement")
