@@ -12,7 +12,7 @@ _G.UnitLevel = function() return 20 end
 local RED, WHITE = { r = 1, g = 0.125, b = 0.125 }, { r = 1, g = 1, b = 1 }
 local tips = {}
 _G.C_TooltipInfo = { GetHyperlink = function(l) return tips[l] end }
-_G.C_Item = { GetItemStats = function() return { ITEM_MOD_HEALING_POWER_SHORT = 50 } end,
+_G.C_Item = { GetItemStats = function() return { ITEM_MOD_SPELL_HEALING_DONE_SHORT = 50 } end,
     GetItemInfo = function() end }
 _G.GetInventoryItemLink = function() end
 

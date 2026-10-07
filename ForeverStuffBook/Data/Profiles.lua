@@ -8,11 +8,11 @@ FSB.Profiles = Profiles
 
 local DEFAULTS = {
     { name = "Soigneur", role = "HEALER", weights = {
-        ITEM_MOD_HEALING_POWER_SHORT = 100, ITEM_MOD_SPELL_POWER_SHORT = 80, ITEM_MOD_INTELLECT_SHORT = 75,
+        ITEM_MOD_SPELL_HEALING_DONE_SHORT = 100, ITEM_MOD_SPELL_DAMAGE_DONE_SHORT = 80, ITEM_MOD_INTELLECT_SHORT = 75,
         ITEM_MOD_MANA_REGENERATION_SHORT = 90, ITEM_MOD_SPIRIT_SHORT = 65, ITEM_MOD_CRIT_RATING_SHORT = 50,
         ITEM_MOD_HASTE_RATING_SHORT = 55, ITEM_MOD_STAMINA_SHORT = 20 } },
     { name = "Dégâts magiques", role = "DAMAGER", damage = "MAGIC", weights = {
-        ITEM_MOD_SPELL_POWER_SHORT = 100, ITEM_MOD_INTELLECT_SHORT = 70, ITEM_MOD_HIT_RATING_SHORT = 85,
+        ITEM_MOD_SPELL_DAMAGE_DONE_SHORT = 100, ITEM_MOD_INTELLECT_SHORT = 70, ITEM_MOD_HIT_RATING_SHORT = 85,
         ITEM_MOD_CRIT_RATING_SHORT = 60, ITEM_MOD_HASTE_RATING_SHORT = 60, ITEM_MOD_STAMINA_SHORT = 15 } },
     { name = "Dégâts physiques", role = "DAMAGER", damage = "PHYSICAL", weights = {
         ITEM_MOD_ATTACK_POWER_SHORT = 50, ITEM_MOD_STRENGTH_SHORT = 80, ITEM_MOD_AGILITY_SHORT = 80,
@@ -31,8 +31,27 @@ local function Copy(t)
 end
 
 -- Appelé une fois la SavedVariable chargée.
+-- Version 2 : les clés de soins/dégâts de sorts ont été corrigées (valeurs vues en jeu).
+local RENAMED = {
+    ITEM_MOD_HEALING_POWER_SHORT = "ITEM_MOD_SPELL_HEALING_DONE_SHORT",
+    ITEM_MOD_SPELL_POWER_SHORT = "ITEM_MOD_SPELL_DAMAGE_DONE_SHORT",
+}
+local function Migrate(db)
+    if (db.schema or 1) >= 2 then return end
+    for _, p in ipairs(db.profiles) do
+        for old, new in pairs(RENAMED) do
+            if p.weights[old] ~= nil then
+                if p.weights[new] == nil then p.weights[new] = p.weights[old] end
+                p.weights[old] = nil
+            end
+        end
+    end
+    db.schema = 2
+end
+
 function Profiles.Init(db)
     if not db.profiles or #db.profiles == 0 then db.profiles = Copy(DEFAULTS) end
+    Migrate(db)
     if not Profiles.Find(db.activeProfile, db) then db.activeProfile = db.profiles[1].name end
 end
 

@@ -163,6 +163,7 @@ function Commands.etat()
     Print(("Spé brute : détectée=%s manuelle=%s rôle=%s stat principale=%s"):format(
         tostring(FSB.Spec.Detect()), tostring(FSB.db.manualSpecID),
         tostring(info and info.role), tostring(info and info.primaryStat)))
+    FSB.Probe.Specs(Print)
     local names = {}
     for _, p in ipairs(FSB.Spec.OffspecProfiles()) do names[#names + 1] = p.name end
     Print("Profils testés pour OFF-SPÉ : " .. table.concat(names, ", "))

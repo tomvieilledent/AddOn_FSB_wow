@@ -123,3 +123,41 @@ function Probe.Debug()
     if FSB.db then FSB.db.debug = lines end
     for _, l in ipairs(lines) do FSB.Utils.Print(l) end
 end
+
+-- /fsb etat : liste brute des spécialisations de la classe et de la spé détectée.
+function Probe.Specs(add)
+    local function pack(...) return { n = select("#", ...), ... } end
+    local function show(t)
+        local out = {}
+        for i = 1, t.n do out[i] = tostring(t[i]) end
+        return table.concat(out, " | ")
+    end
+    local classID = select(3, UnitClass("player"))
+    local okN, num = pcall(function() return C_SpecializationInfo.GetNumSpecializationsForClassID(classID) end)
+    add("classe : " .. tostring(classID) .. " | spés de la classe : " .. tostring(okN and num))
+    for i = 1, 6 do
+        local ok, r = pcall(function() return pack(GetSpecializationInfoForClassID(classID, i)) end)
+        if ok and r[1] then add("  spé " .. i .. " : " .. show(r)) end
+    end
+    local okI, idx = pcall(function() return C_SpecializationInfo.GetSpecialization() end)
+    add("index détecté : " .. tostring(okI and idx))
+    if okI and idx then
+        local ok, r = pcall(function() return pack(C_SpecializationInfo.GetSpecializationInfo(idx)) end)
+        add("GetSpecializationInfo(index) : " .. (ok and show(r) or "erreur"))
+    end
+    local current = FSB.Spec.Current()
+    if current then
+        local ok, r = pcall(function() return pack(GetSpecializationInfoForSpecID(current)) end)
+        add("GetSpecializationInfoForSpecID(" .. current .. ") : " .. (ok and show(r) or "erreur"))
+    end
+    if GetNumTalentTabs then
+        local okT, tabs = pcall(GetNumTalentTabs)
+        add("onglets de talents : " .. tostring(okT and tabs))
+        for t = 1, (okT and tabs or 0) do
+            local ok, r = pcall(function() return pack(GetTalentTabInfo(t)) end)
+            add("  onglet " .. t .. " : " .. (ok and show(r) or "erreur"))
+        end
+    end
+    if GetShapeshiftFormID then add("forme : " .. tostring(select(2, pcall(GetShapeshiftFormID)))) end
+    if UnitGroupRolesAssigned then add("rôle de groupe : " .. tostring(select(2, pcall(UnitGroupRolesAssigned, "player")))) end
+end

@@ -35,7 +35,7 @@ local invalidations = 0
 FSB.Analyzer = { InvalidateAll = function() end, InvalidateGroup = function() invalidations = invalidations + 1 end }
 FSB.Compat.GetStats = function(link) return link ~= "missing" and { ITEM_MOD_STAMINA_SHORT = 1 } or nil end
 FSB.Compat.GetSetID = function() return nil end
-FSB.Spec.Info = function(id) return { role = "HEALER", primaryStat = 3 } end
+FSB.Spec.Info = function(id) return { role = "HEALER", primaryStat = 4 } end
 assert(loadfile("ForeverStuffBook/Core/Inspector.lua"))("FSB", FSB)
 local I = FSB.Inspector
 

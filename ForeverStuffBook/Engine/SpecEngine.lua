@@ -5,10 +5,11 @@ local _, FSB = ...
 local SpecEngine = {}
 FSB.SpecEngine = SpecEngine
 
-local PRIMARY_INTELLECT = 3
+-- Valeur VERIFIED en jeu : une spé de prêtre renvoie 4 comme stat principale (intelligence).
+local PRIMARY_INTELLECT = 4
 
 -- Profil par défaut pour un rôle ("HEALER" | "TANK" | "DAMAGER") et une stat principale
--- (1 force, 2 agilité, 3 intelligence). Utilise les champs role/damage des profils.
+-- (1 force, 2 agilité, 4 intelligence). Utilise les champs role/damage des profils.
 function SpecEngine.DefaultProfile(role, primaryStat, profiles)
     local damage
     if role == "DAMAGER" then

@@ -8,12 +8,12 @@ local T = H.counter(); local check = T.check
 FSB.db = {}; FSB.Profiles.Init(FSB.db)
 local S = FSB.Stats.SLOT
 local HEAL, MAGE, PHYS, TANK = unpack(FSB.db.profiles)
-local HP, AP = "ITEM_MOD_HEALING_POWER_SHORT", "ITEM_MOD_ATTACK_POWER_SHORT"
+local HP, AP = "ITEM_MOD_SPELL_HEALING_DONE_SHORT", "ITEM_MOD_ATTACK_POWER_SHORT"
 local function item(stats, setID) return { stats = stats, setID = setID, link = "L" .. tostring(setID) } end
 
 -- Profils OFF-SPÉ selon la classe ---------------------------------------------------------------
 local SE, builtin = FSB.SpecEngine, FSB.Profiles.IsBuiltin
-local priest = { { role = "HEALER", primaryStat = 3 }, { role = "HEALER", primaryStat = 3 }, { role = "DAMAGER", primaryStat = 3 } }
+local priest = { { role = "HEALER", primaryStat = 4 }, { role = "HEALER", primaryStat = 4 }, { role = "DAMAGER", primaryStat = 4 } }
 local function names(l) local t = {}; for _, p in ipairs(l) do t[#t + 1] = p.name end; return table.concat(t, ",") end
 check("prêtre : ni Tank ni physique", names(SE.ClassProfiles(FSB.db.profiles, priest, builtin, HEAL.name, {})) == HEAL.name .. "," .. MAGE.name)
 check("profil actif toujours gardé", names(SE.ClassProfiles(FSB.db.profiles, priest, builtin, TANK.name, {})):find("Tank"))
@@ -23,6 +23,13 @@ local withCustom = { HEAL, MAGE, PHYS, TANK, custom }
 check("profil utilisateur gardé", names(SE.ClassProfiles(withCustom, priest, builtin, HEAL.name, {})):find("Farm"))
 check("spé illisible : aucun filtre", #SE.ClassProfiles(FSB.db.profiles, { { role = "DAMAGER" } }, builtin, HEAL.name, {}) == 4)
 check("aucune info : aucun filtre", #SE.ClassProfiles(FSB.db.profiles, nil, builtin, HEAL.name, {}) == 4)
+
+-- Migration des clés de stats (schéma 1 -> 2) ----------------------------------------------------
+local old = { profiles = { { name = "X", weights = { ITEM_MOD_HEALING_POWER_SHORT = 7, ITEM_MOD_SPELL_POWER_SHORT = 3 } } } }
+FSB.Profiles.Init(old)
+check("migration : clé de soins renommée", old.profiles[1].weights.ITEM_MOD_SPELL_HEALING_DONE_SHORT == 7
+    and old.profiles[1].weights.ITEM_MOD_HEALING_POWER_SHORT == nil and old.schema == 2)
+check("stats vues en jeu non signalées inconnues", FSB.Stats.IsKnown("RESISTANCE5_NAME") and FSB.Stats.IsKnown("ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT"))
 
 -- Sets -------------------------------------------------------------------------------------
 local thresholds = function() return { 2, 4 } end
@@ -61,7 +68,7 @@ HEAL.setBonusValue = nil
 local P = FSB.db.profiles
 check("spé soigneur", FSB.SpecEngine.DefaultProfile("HEALER", 3, P) == HEAL)
 check("spé tank", FSB.SpecEngine.DefaultProfile("TANK", 1, P) == TANK)
-check("spé dps int", FSB.SpecEngine.DefaultProfile("DAMAGER", 3, P) == MAGE)
+check("spé dps int", FSB.SpecEngine.DefaultProfile("DAMAGER", 4, P) == MAGE)
 check("spé dps agi", FSB.SpecEngine.DefaultProfile("DAMAGER", 2, P) == PHYS)
 check("dps sans stat principale : pas de devinette", FSB.SpecEngine.DefaultProfile("DAMAGER", nil, P) == nil)
 check("spé inconnue : nil", FSB.SpecEngine.ProfileForSpec(0, nil, P, {}) == nil)

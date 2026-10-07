@@ -17,7 +17,7 @@ _G.IsInGroup = function() return false end
 _G.C_Item = {
     GetItemInfoInstant = function(l) return 1, "a", "b", ({ ring = "INVTYPE_FINGER", pot = "" })[l] end,
     GetItemQualityByID = function(l) return 3 end,
-    GetItemStats = function(l) return { ITEM_MOD_HEALING_POWER_SHORT = 20, ITEM_MOD_NEW_THING = 3 } end,
+    GetItemStats = function(l) return { ITEM_MOD_SPELL_HEALING_DONE_SHORT = 20, ITEM_MOD_NEW_THING = 3 } end,
     GetItemInfo = function() end,
 }
 _G.GetInventoryItemLink = function(u, s) end
@@ -34,6 +34,7 @@ local function files(p) local t = {}; for l in io.lines(p) do if l:match("%.lua$
 check("TOC identiques", files("ForeverStuffBook/ForeverStuffBook.toc") == files("ForeverStuffBook/ForeverStuffBook_Camelot.toc"))
 
 handlers.onEvent(nil, "ADDON_LOADED", "ForeverStuffBook")
+check("schéma des SavedVariables à jour", FSB.db.schema == 2)
 check("SavedVariables initialisées", ForeverStuffBookDB and FSB.db.enabled and #FSB.db.profiles == 4)
 
 local tt = { n = {}, GetItem = function(s) return "x", s.link end,

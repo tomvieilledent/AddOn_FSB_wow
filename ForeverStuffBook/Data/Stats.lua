@@ -1,7 +1,8 @@
 local _, FSB = ...
 
--- Clés de statistiques telles que renvoyées par C_Item.GetItemStats (à confirmer en jeu
--- avec /fsb inconnus : toute clé non listée ici est ignorée du score et enregistrée).
+-- Clés de statistiques renvoyées par C_Item.GetItemStats. Les clés de soins/dégâts de sorts
+-- (ITEM_MOD_SPELL_*_DONE_SHORT) sont VERIFIED en jeu ; les autres restent à confirmer avec
+-- /fsb inconnus : toute clé non listée est ignorée du score et enregistrée.
 local Stats = {}
 FSB.Stats = Stats
 
@@ -13,8 +14,8 @@ Stats.KEYS = {
     { key = "ITEM_MOD_INTELLECT_SHORT",         alias = "int",      label = "Intelligence" },
     { key = "ITEM_MOD_SPIRIT_SHORT",            alias = "esprit",   label = "Esprit" },
     { key = "ITEM_MOD_ATTACK_POWER_SHORT",      alias = "pa",       label = "Puissance d'attaque" },
-    { key = "ITEM_MOD_SPELL_POWER_SHORT",       alias = "ps",       label = "Puissance des sorts" },
-    { key = "ITEM_MOD_HEALING_POWER_SHORT",     alias = "soins",    label = "Puissance des soins" },
+    { key = "ITEM_MOD_SPELL_DAMAGE_DONE_SHORT",       alias = "ps",       label = "Puissance des sorts" },
+    { key = "ITEM_MOD_SPELL_HEALING_DONE_SHORT",     alias = "soins",    label = "Puissance des soins" },
     { key = "ITEM_MOD_MANA_REGENERATION_SHORT", alias = "mp5",      label = "MP5" },
     { key = "ITEM_MOD_CRIT_RATING_SHORT",       alias = "crit",     label = "Critique" },
     { key = "ITEM_MOD_HIT_RATING_SHORT",        alias = "toucher",  label = "Toucher" },
@@ -28,10 +29,24 @@ Stats.KEYS = {
     { key = "ITEM_MOD_RESILIENCE_RATING_SHORT", alias = "resil",    label = "Résilience" },
 }
 
+-- Clés vues en jeu, volontairement hors score pour l'instant (pas de poids, pas dans l'interface) :
+-- dégâts par école, résistances, régénération de vie. Elles ne sont pas signalées comme inconnues.
+Stats.IGNORED = {
+    ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT = true, ITEM_MOD_FIRE_DAMAGE_DONE_SHORT = true,
+    ITEM_MOD_NATURE_DAMAGE_DONE_SHORT = true, ITEM_MOD_FROST_DAMAGE_DONE_SHORT = true,
+    ITEM_MOD_ARCANE_DAMAGE_DONE_SHORT = true, ITEM_MOD_HOLY_DAMAGE_DONE_SHORT = true,
+    ITEM_MOD_SHADOW_RESISTANCE_SHORT = true, ITEM_MOD_FIRE_RESISTANCE_SHORT = true,
+    ITEM_MOD_NATURE_RESISTANCE_SHORT = true, ITEM_MOD_FROST_RESISTANCE_SHORT = true,
+    ITEM_MOD_ARCANE_RESISTANCE_SHORT = true, ITEM_MOD_HOLY_RESISTANCE_SHORT = true,
+    RESISTANCE1_NAME = true, RESISTANCE2_NAME = true, RESISTANCE3_NAME = true,
+    RESISTANCE4_NAME = true, RESISTANCE5_NAME = true, RESISTANCE6_NAME = true,
+    ITEM_MOD_HEALTH_REGEN_SHORT = true,
+}
+
 local byKey, byAlias = {}, {}
 for _, s in ipairs(Stats.KEYS) do byKey[s.key] = s; byAlias[s.alias] = s end
 
-function Stats.IsKnown(key) return byKey[key] ~= nil end
+function Stats.IsKnown(key) return byKey[key] ~= nil or Stats.IGNORED[key] == true end
 function Stats.FromAlias(text) local s = byAlias[(text or ""):lower()]; return s and s.key end
 function Stats.Label(key) return byKey[key] and byKey[key].label or key end
 

@@ -22,8 +22,8 @@ local function check(name, cond)
     if not cond then fails = fails + 1; print("ECHEC: " .. name) end
 end
 
-local HP, INT, AP = "ITEM_MOD_HEALING_POWER_SHORT", "ITEM_MOD_INTELLECT_SHORT", "ITEM_MOD_ATTACK_POWER_SHORT"
-local SP = "ITEM_MOD_SPELL_POWER_SHORT"
+local HP, INT, AP = "ITEM_MOD_SPELL_HEALING_DONE_SHORT", "ITEM_MOD_INTELLECT_SHORT", "ITEM_MOD_ATTACK_POWER_SHORT"
+local SP = "ITEM_MOD_SPELL_DAMAGE_DONE_SHORT"
 
 -- objet supérieur / inférieur
 local worn = { [S.CHEST] = item{ [HP] = 20, [INT] = 10 } }

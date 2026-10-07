@@ -32,3 +32,11 @@ Addon passif : aucune action de jeu, aucune simulation d'entrée, aucune API pro
 ## Limitations connues
 - Pas de filtre de classe/armure/arme (écart avec le cahier des charges §3).
 - Poids par défaut génériques, non sourcés.
+
+## Données lues en jeu (VERIFIED, 2026-10-07, prêtre)
+- Clés de stats : `ITEM_MOD_INTELLECT_SHORT`, `ITEM_MOD_SPIRIT_SHORT`, `ITEM_MOD_SPELL_HEALING_DONE_SHORT`,
+  `ITEM_MOD_SPELL_DAMAGE_DONE_SHORT`, `ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT`, `ITEM_MOD_FIRE_DAMAGE_DONE_SHORT`,
+  `ITEM_MOD_*_RESISTANCE_SHORT`, `RESISTANCE3/5/6_NAME`, `ITEM_MOD_HEALTH_REGEN_SHORT`.
+  `ITEM_MOD_HEALING_POWER_SHORT` et `ITEM_MOD_SPELL_POWER_SHORT` : jamais observées (supprimées du code).
+- Stat principale d'une spé : intelligence = 4.
+- Spé détectée du prêtre : id 1487, `role=DAMAGER` pour un soigneur : **CONFLICTING** avec la réalité. Spés de la classe : à lire via `/fsb etat`.
