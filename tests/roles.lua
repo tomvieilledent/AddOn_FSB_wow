@@ -60,6 +60,30 @@ _G.GetTalentTabInfo = function(i) return 100 + i, names[i], "desc", "icone", poi
 check("disposition moderne reconnue", select(2, FSB.Spec.ActiveTree()) == "Givre")
 _G.GetNumTalentTabs, _G.GetTalentTabInfo = nil, nil
 check("API de talents absente : pas d'arbre", FSB.Spec.ActiveTree() == nil)
+-- Système moderne (C_Traits) : points regroupés par groupIDs
+classFile = "PRIEST"; detected = 1487
+local nodes = { [1] = { 11, 3 }, [2] = { 11, 2 }, [3] = { 12, 6 }, [4] = { 13, 0 }, [5] = { 13, 0 } }
+_G.C_ClassTalents = { GetActiveConfigID = function() return 99 end }
+_G.C_Traits = {
+    GetConfigInfo = function() return { treeIDs = { 7 } } end,
+    GetTreeNodes = function() return { 1, 2, 3, 4, 5 } end,
+    GetNodeInfo = function(_, id) return { groupIDs = { nodes[id][1] }, currentRank = nodes[id][2] } end,
+}
+FSB.db.specChoice = {}
+local idx, tname = FSB.Spec.ActiveTree()
+check("C_Traits : arbre actif = groupe avec le plus de points", idx == 2 and tname == "Sacré")
+check("C_Traits : libellé avec la spé", FSB.Spec.Label():find("Spé : ", 1, true) and FSB.Spec.Label():find("Sacré", 1, true))
+check("C_Traits : prêtre Sacré -> question soin/dégâts Sacré", FSB.Spec.NeedsChoice() and #FSB.Spec.Choices(1487) == 2)
+nodes[1], nodes[2] = { 11, 0 }, { 11, 0 }
+nodes[4] = { 13, 9 }
+check("C_Traits : Ombre -> profil Dégâts Ombre sans question", select(2, FSB.Spec.ActiveTree()) == "Ombre"
+    and (FSB.Spec.Apply() or true) and FSB.db.activeProfile == "Dégâts Ombre" and not FSB.Spec.NeedsChoice())
+nodes[4], nodes[5] = { 14, 0 }, { 15, 0 }
+check("C_Traits : nombre de groupes inattendu -> aucune devinette", FSB.Spec.ActiveTree() == nil)
+nodes[4], nodes[5] = { 13, 0 }, { 13, 0 }
+nodes[1], nodes[2], nodes[3] = { 11, 4 }, { 12, 4 }, { 13, 4 }
+check("C_Traits : égalité -> aucune devinette", FSB.Spec.ActiveTree() == nil)
+_G.C_ClassTalents, _G.C_Traits = nil, nil
 FSB.db.specChoice = {}; detected = nil
 check("spé non détectée : aucune question ni changement", not FSB.Spec.NeedsChoice() and FSB.Spec.Apply() == false)
 T.finish("rôles")

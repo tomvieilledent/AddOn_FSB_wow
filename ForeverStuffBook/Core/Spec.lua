@@ -58,23 +58,57 @@ end
 
 local function ClassFile() return select(2, UnitClass("player")) end
 
--- Points investis par arbre de talents : { { name, points } } ou nil si l'API est absente/illisible.
--- Deux dispositions de GetTalentTabInfo sont reconnues (Classic : nom, icône, points ; moderne : id, nom,
--- description, icône, points) — UNVERIFIED sur Forever, voir /fsb etat.
-function Spec.ReadTrees()
-    if not GetNumTalentTabs or not GetTalentTabInfo then return nil end
-    local ok, n = pcall(GetNumTalentTabs)
-    if not ok or type(n) ~= "number" or n < 1 then return nil end
-    local trees = {}
-    for i = 1, n do
-        local okT, a, b, c, d, e = pcall(GetTalentTabInfo, i)
-        local name, points
-        if okT and type(a) == "string" then name, points = a, c
-        elseif okT and type(a) == "number" and type(b) == "string" then name, points = b, e end
-        if type(points) ~= "number" then return nil end
-        trees[i] = { name = name, points = points }
+-- Points investis par arbre de talents, système moderne (C_Traits) : les nœuds de la configuration active sont
+-- regroupés par `groupIDs` ; chaque groupe correspond à un arbre classique, dans l'ordre croissant des identifiants
+-- (= ordre des onglets). Les groupes ne sont acceptés que s'ils sont aussi nombreux que les arbres connus de la
+-- classe (aucune devinette sinon). UNVERIFIED sur Forever : voir le rapport (/fsb rapport, lignes TRAITS).
+local function ReadTraitTrees()
+    if not C_ClassTalents or not C_Traits then return nil end
+    local ok, configID = pcall(function() return C_ClassTalents.GetActiveConfigID() end)
+    if not ok or not configID then return nil end
+    local okC, cfg = pcall(function() return C_Traits.GetConfigInfo(configID) end)
+    if not okC or type(cfg) ~= "table" or type(cfg.treeIDs) ~= "table" then return nil end
+    local points, order = {}, {}
+    for _, treeID in ipairs(cfg.treeIDs) do
+        local okN, nodes = pcall(function() return C_Traits.GetTreeNodes(treeID) end)
+        if not okN or type(nodes) ~= "table" then return nil end
+        for _, nodeID in ipairs(nodes) do
+            local okI, info = pcall(function() return C_Traits.GetNodeInfo(configID, nodeID) end)
+            local group = okI and type(info) == "table" and type(info.groupIDs) == "table" and info.groupIDs[1]
+            if group then
+                if points[group] == nil then points[group] = 0; order[#order + 1] = group end
+                points[group] = points[group] + (tonumber(info.currentRank) or 0)
+            end
+        end
     end
+    table.sort(order)
+    local known = FSB.Classes.TREES[select(2, UnitClass("player")) or ""]
+    if not known or #order ~= #known then return nil end
+    local names = FSB.L.TREE_NAMES and FSB.L.TREE_NAMES[select(2, UnitClass("player"))]
+    local trees = {}
+    for i, group in ipairs(order) do trees[i] = { name = (names and names[i]) or ("#" .. i), points = points[group] } end
     return trees
+end
+
+-- Points investis par arbre : { { name, points } } ou nil si aucune API de talents lisible.
+-- Ancien système (GetTalentTabInfo, absent de Forever d'après /fsb rapport) puis système moderne (C_Traits).
+function Spec.ReadTrees()
+    if GetNumTalentTabs and GetTalentTabInfo then
+        local ok, n = pcall(GetNumTalentTabs)
+        if ok and type(n) == "number" and n >= 1 then
+            local trees = {}
+            for i = 1, n do
+                local okT, a, b, c, d, e = pcall(GetTalentTabInfo, i)
+                local name, points
+                if okT and type(a) == "string" then name, points = a, c
+                elseif okT and type(a) == "number" and type(b) == "string" then name, points = b, e end
+                if type(points) ~= "number" then trees = nil; break end
+                trees[i] = { name = name, points = points }
+            end
+            if trees then return trees end
+        end
+    end
+    return ReadTraitTrees()
 end
 
 -- (index, nom) de l'arbre de talents le plus investi, ou nil (API absente, aucun point, égalité).

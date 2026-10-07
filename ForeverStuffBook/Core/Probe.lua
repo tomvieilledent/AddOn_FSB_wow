@@ -257,8 +257,8 @@ function Probe.Traits(add)
                 shown = shown + 1
                 if shown == 1 then add("TRAITS champs d'un nœud : " .. Keys(info)) end
                 local entryID = (info.activeEntry and info.activeEntry.entryID) or (info.entryIDs and info.entryIDs[1])
-                add(("  nœud %s rang %s/%s type=%s pos=%s,%s : %s"):format(tostring(nodeID),
-                    tostring(info.currentRank), tostring(info.maxRanks), tostring(info.type),
+                add(("  nœud %s rang %s/%s groupes=%s pos=%s,%s : %s"):format(tostring(nodeID),
+                    tostring(info.currentRank), tostring(info.maxRanks), table.concat(info.groupIDs or {}, "+"),
                     tostring(info.posX), tostring(info.posY), EntryName(configID, entryID)))
             end
         end

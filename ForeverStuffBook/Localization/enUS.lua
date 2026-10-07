@@ -92,6 +92,13 @@ FSB.Locales.enUS = {
     LANG_CHANGED    = "Language: English",
     LANG_UNKNOWN    = "Unknown language: %s (fr or en)",
     POIDS_TITLE     = "%s (fixed, indicative weights)",
+    TREE_NAMES = {
+        WARRIOR = { "Arms", "Fury", "Protection" }, PALADIN = { "Holy", "Protection", "Retribution" },
+        HUNTER = { "Beast Mastery", "Marksmanship", "Survival" }, ROGUE = { "Assassination", "Combat", "Subtlety" },
+        PRIEST = { "Discipline", "Holy", "Shadow" }, SHAMAN = { "Elemental", "Enhancement", "Restoration" },
+        MAGE = { "Arcane", "Fire", "Frost" }, WARLOCK = { "Affliction", "Demonology", "Destruction" },
+        DRUID = { "Balance", "Feral", "Restoration" },
+    },
     STATS = {
         RESISTANCE0_NAME = "Armor", ITEM_MOD_DAMAGE_PER_SECOND_SHORT = "Weapon DPS",
         ITEM_MOD_STRENGTH_SHORT = "Strength", ITEM_MOD_AGILITY_SHORT = "Agility", ITEM_MOD_STAMINA_SHORT = "Stamina",

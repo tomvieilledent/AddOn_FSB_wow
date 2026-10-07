@@ -95,6 +95,13 @@ FSB.Locales.frFR = {
     LANG_CHANGED    = "Langue : Français",
     LANG_UNKNOWN    = "Langue inconnue : %s (fr ou en)",
     POIDS_TITLE     = "%s (poids fixes, indicatifs)",
+    TREE_NAMES = {
+        WARRIOR = { "Armes", "Fureur", "Protection" }, PALADIN = { "Sacré", "Protection", "Vindicte" },
+        HUNTER = { "Maîtrise des bêtes", "Précision", "Survie" }, ROGUE = { "Assassinat", "Combat", "Finesse" },
+        PRIEST = { "Discipline", "Sacré", "Ombre" }, SHAMAN = { "Élémentaire", "Amélioration", "Restauration" },
+        MAGE = { "Arcanes", "Feu", "Givre" }, WARLOCK = { "Affliction", "Démonologie", "Destruction" },
+        DRUID = { "Équilibre", "Combat farouche", "Restauration" },
+    },
     STATS = {
         RESISTANCE0_NAME = "Armure", ITEM_MOD_DAMAGE_PER_SECOND_SHORT = "DPS de l'arme",
         ITEM_MOD_STRENGTH_SHORT = "Force", ITEM_MOD_AGILITY_SHORT = "Agilité", ITEM_MOD_STAMINA_SHORT = "Endurance",
