@@ -4,7 +4,7 @@ local H = {}
 
 function H.load(files)
     local FSB = {}
-    for _, f in ipairs(files) do assert(loadfile("ForeverStuffBook/" .. f .. ".lua"))("FSB", FSB) end
+    for _, f in ipairs(files) do assert(loadfile("ForeverStuffBuddy/" .. f .. ".lua"))("FSB", FSB) end
     return FSB
 end
 

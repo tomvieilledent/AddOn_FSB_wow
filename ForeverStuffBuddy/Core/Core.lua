@@ -8,13 +8,13 @@ local defaults = {
 }
 
 local function InitDB()
-    ForeverStuffBookDB = ForeverStuffBookDB or {}
+    ForeverStuffBuddyDB = ForeverStuffBuddyDB or {}
     for k, v in pairs(defaults) do
-        if ForeverStuffBookDB[k] == nil then
-            ForeverStuffBookDB[k] = type(v) == "table" and {} or v
+        if ForeverStuffBuddyDB[k] == nil then
+            ForeverStuffBuddyDB[k] = type(v) == "table" and {} or v
         end
     end
-    FSB.db = ForeverStuffBookDB
+    FSB.db = ForeverStuffBuddyDB
     -- Langue : choix mémorisé, sinon celle du client (français si le client est en français, sinon anglais).
     if FSB.db.language and FSB.Locales[FSB.db.language] then
         FSB.language = FSB.db.language

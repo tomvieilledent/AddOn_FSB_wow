@@ -4,7 +4,7 @@ local _, FSB = ...
 -- (FSB.language) et retombe sur le français pour toute clé manquante.
 FSB.Locales = FSB.Locales or {}
 FSB.Locales.frFR = {
-    ADDON_LOADED   = "Forever Stuff Book chargé. Tape /fsb pour l'aide.",
+    ADDON_LOADED   = "Forever Stuff Buddy chargé. Tape /fsb pour l'aide.",
     ANALYSIS_TITLE = "FSB",
     PROFILE        = "Profil",
     SPEC           = "Rôle",
@@ -52,7 +52,7 @@ FSB.Locales.frFR = {
     STATE_SPEC      = "Spé : %s | profil : %s",
 
     -- Interface
-    UI_TITLE        = "Forever Stuff Book",
+    UI_TITLE        = "Forever Stuff Buddy",
     UI_ENABLED      = "Analyse activée",
     UI_WEIGHTS      = "Poids des statistiques (fixes, indicatifs)",
     LOG_CLEARED     = "Journal vidé.",
@@ -61,7 +61,7 @@ FSB.Locales.frFR = {
     LOG_NOITEM      = "Survole d'abord un objet, puis /fsb mauvais [commentaire].",
     LOG_FLAGGED     = "Noté dans le journal. Merci : /fsb log pour l'exporter.",
     LOG_COUNT       = "Journal : %d entrée(s) (/fsb log)",
-    COPY_TITLE      = "Forever Stuff Book — Ctrl+A puis Ctrl+C pour copier",
+    COPY_TITLE      = "Forever Stuff Buddy — Ctrl+A puis Ctrl+C pour copier",
     UI_ICONS        = "Icônes",
     UI_DETAILS      = "Détails",
     UI_STATUS       = "%s",

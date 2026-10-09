@@ -1,6 +1,6 @@
 -- Tests purs du moteur (hors jeu) : luajit tests/run.lua
 local FSB = {}
-local base = "ForeverStuffBook/"
+local base = "ForeverStuffBuddy/"
 for _, f in ipairs{ "Localization/frFR", "Utils/Utils", "Data/Stats", "Data/Profiles",
     "Engine/ScoreEngine", "Engine/EquipmentOptimizer", "Engine/VerdictEngine" } do
     assert(loadfile(base .. f .. ".lua"))("FSB", FSB)

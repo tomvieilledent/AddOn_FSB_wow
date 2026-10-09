@@ -3,7 +3,7 @@ local _, FSB = ...
 -- English texts. Missing keys fall back to French (see frFR.lua).
 FSB.Locales = FSB.Locales or {}
 FSB.Locales.enUS = {
-    ADDON_LOADED   = "Forever Stuff Book loaded. Type /fsb for help.",
+    ADDON_LOADED   = "Forever Stuff Buddy loaded. Type /fsb for help.",
     ANALYSIS_TITLE = "FSB",
     PROFILE        = "Profile",
     SPEC           = "Role",
@@ -50,7 +50,7 @@ FSB.Locales.enUS = {
     STATE           = "Mode: %s | members to scan: %d | comparable members: %d",
     STATE_SPEC      = "Spec: %s | profile: %s",
 
-    UI_TITLE        = "Forever Stuff Book",
+    UI_TITLE        = "Forever Stuff Buddy",
     UI_ENABLED      = "Analysis enabled",
     UI_WEIGHTS      = "Stat weights (fixed, indicative)",
     LOG_CLEARED     = "Log cleared.",
@@ -59,7 +59,7 @@ FSB.Locales.enUS = {
     LOG_NOITEM      = "Hover an item first, then /fsb mauvais [comment].",
     LOG_FLAGGED     = "Noted in the log. Thanks: /fsb log to export it.",
     LOG_COUNT       = "Log: %d entr(ies) (/fsb log)",
-    COPY_TITLE      = "Forever Stuff Book — Ctrl+A then Ctrl+C to copy",
+    COPY_TITLE      = "Forever Stuff Buddy — Ctrl+A then Ctrl+C to copy",
     UI_ICONS        = "Icons",
     UI_DETAILS      = "Details",
     UI_STATUS       = "%s",

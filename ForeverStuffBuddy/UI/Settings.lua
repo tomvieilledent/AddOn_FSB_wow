@@ -12,7 +12,7 @@ UI.SHOW_STATS_TAB = true
 
 local WIDTH, HEIGHT = 560, 520
 local WHITE = "Interface\\Buttons\\WHITE8X8"
-local LOGO = "Interface\\AddOns\\ForeverStuffBook\\Media\\logo"
+local LOGO = "Interface\\AddOns\\ForeverStuffBuddy\\Media\\logo"
 
 -- Palette : anthracite, bronze, or mat ; couleurs de verdict sobres (aucun violet).
 local C = {
@@ -302,7 +302,7 @@ function UI.Refresh()
         s.enabled.Refresh(); s.icons.Refresh(); s.details.Refresh(); s.fairness.Refresh()
         s.langFR:SetActive(FSB.language == "frFR"); s.langEN:SetActive(FSB.language == "enUS")
     end
-    frame.version:SetText("v" .. FSB.Utils.AddonVersion(FSB.name or "ForeverStuffBook"))
+    frame.version:SetText("v" .. FSB.Utils.AddonVersion(FSB.name or "ForeverStuffBuddy"))
     if pages.stats then
         local active = FSB.Profiles.GetActive()
         pages.stats.title:SetText(FSB.L.POIDS_TITLE:format(FSB.Profiles.DisplayName(active.name)))

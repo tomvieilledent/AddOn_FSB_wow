@@ -1,4 +1,4 @@
-# Contribuer à Forever Stuff Book
+# Contribuer à Forever Stuff Buddy
 
 FSB est 100 % open source (licence MIT, voir `LICENSE`). Fork, modifie, propose une amélioration.
 
@@ -12,7 +12,7 @@ FSB est 100 % open source (licence MIT, voir `LICENSE`). Fork, modifie, propose 
 
 ## Structure
 ```
-ForeverStuffBook/
+ForeverStuffBuddy/
 ├── Core/          événements, commandes, Compat (seule couche d'API WoW), contexte, spé, inspection, journal, sonde
 ├── Data/          stats (clés ITEM_MOD_*), profils et poids, classes/arbres de talents
 ├── Engine/        score, optimiseur d'équipement, sets, verdicts, analyseur + cache (Lua pur, testable hors jeu)

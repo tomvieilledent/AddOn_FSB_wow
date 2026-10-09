@@ -1,10 +1,10 @@
 ## Interface: 16001
-## Title: Forever Stuff Book
+## Title: Forever Stuff Buddy
 ## Notes: Assistant passif de décision équipement/loot (FSB). Aucune action automatique.
-## IconTexture: Interface\AddOns\ForeverStuffBook\Media\logo
+## IconTexture: Interface\AddOns\ForeverStuffBuddy\Media\logo
 ## Author: Koga / Fitaxal
 ## Version: 0.6.0
-## SavedVariables: ForeverStuffBookDB
+## SavedVariables: ForeverStuffBuddyDB
 
 Localization\frFR.lua
 Localization\enUS.lua

@@ -3,8 +3,8 @@
 Ces tests ne peuvent pas être faits hors du client. Cocher au fur et à mesure et me renvoyer les **échecs** avec le
 message d'erreur Lua exact (activer les erreurs : `/console scriptErrors 1`).
 
-**Installation** : copier `ForeverStuffBook/` dans `Interface\AddOns\`, redémarrer le client (ou `/reload`).
-Si l'addon n'apparaît pas dans la liste, vérifier qu'il charge via le fichier `ForeverStuffBook_Camelot.toc`.
+**Installation** : copier `ForeverStuffBuddy/` dans `Interface\AddOns\`, redémarrer le client (ou `/reload`).
+Si l'addon n'apparaît pas dans la liste, vérifier qu'il charge via le fichier `ForeverStuffBuddy_Camelot.toc`.
 
 Légende : ✅ attendu · 🔎 information à me rapporter
 
@@ -12,7 +12,7 @@ Légende : ✅ attendu · 🔎 information à me rapporter
 
 ## 0. Chargement
 - [ ] L'addon est listé dans « Addons » et chargé sans erreur Lua.
-- [ ] Message `FSB: Forever Stuff Book chargé…` au login.
+- [ ] Message `FSB: Forever Stuff Buddy chargé…` au login.
 - [ ] `/fsb` ouvre une fenêtre (voir §7). Si erreur : `FSB: UI : <message>` → me le renvoyer.
 - [ ] `/fsb aide` liste les commandes.
 

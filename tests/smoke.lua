@@ -39,18 +39,18 @@ _G.Enum = { TooltipDataType = { Item = 1 } }
 _G.TooltipDataProcessor = { AddTooltipPostCall = function(_, f) hooks.tooltip = f end }
 
 local FSB = {}
-for line in io.lines("ForeverStuffBook/ForeverStuffBook_Camelot.toc") do
-    if line:match("%.lua$") then assert(loadfile("ForeverStuffBook/" .. line:gsub("\\", "/")))("ForeverStuffBook", FSB) end
+for line in io.lines("ForeverStuffBuddy/ForeverStuffBuddy_Camelot.toc") do
+    if line:match("%.lua$") then assert(loadfile("ForeverStuffBuddy/" .. line:gsub("\\", "/")))("ForeverStuffBuddy", FSB) end
 end
 -- le TOC par défaut doit lister les mêmes fichiers
 local function files(p) local t = {}; for l in io.lines(p) do if l:match("%.lua$") then t[#t + 1] = l end end; return table.concat(t, "|") end
-check("TOC identiques", files("ForeverStuffBook/ForeverStuffBook.toc") == files("ForeverStuffBook/ForeverStuffBook_Camelot.toc"))
+check("TOC identiques", files("ForeverStuffBuddy/ForeverStuffBuddy.toc") == files("ForeverStuffBuddy/ForeverStuffBuddy_Camelot.toc"))
 
 _G.GetLocale = function() return "deDE" end
-handlers.onEvent(nil, "ADDON_LOADED", "ForeverStuffBook")
+handlers.onEvent(nil, "ADDON_LOADED", "ForeverStuffBuddy")
 check("client non français : interface en anglais par défaut", FSB.language == "enUS")
 check("schéma des SavedVariables à jour", FSB.db.schema == 4)
-check("SavedVariables initialisées", ForeverStuffBookDB and FSB.db.enabled and #FSB.db.profiles == 10)
+check("SavedVariables initialisées", ForeverStuffBuddyDB and FSB.db.enabled and #FSB.db.profiles == 10)
 
 local tt = { n = {}, GetItem = function(s) return "x", s.link end,
     AddLine = function(s, t) s.n[#s.n + 1] = t end, AddDoubleLine = function(s, t) s.n[#s.n + 1] = t end, Show = function() end }

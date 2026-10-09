@@ -1,6 +1,6 @@
-<p align="center"><img src="assets/logo.png" alt="Forever Stuff Book" width="220"></p>
+<p align="center"><img src="assets/logo.png" alt="Forever Stuff Buddy" width="220"></p>
 
-# Forever Stuff Book (FSB)
+# Forever Stuff Buddy (FSB)
 
 Développé par **Koga / Fitaxal**. Projet 100 % open source (licence MIT, voir `LICENSE` et `CONTRIBUTING.md`).
 
@@ -26,7 +26,7 @@ un autre membre ». Le joueur reste libre. Aucun score n'est affiché.
 
 ## Installation
 
-Copier le dossier `ForeverStuffBook/` dans `Interface\AddOns\` du client Forever. `/fsb` ouvre la configuration.
+Copier le dossier `ForeverStuffBuddy/` dans `Interface\AddOns\` du client Forever. `/fsb` ouvre la configuration.
 Tests en jeu à effectuer : voir [`docs/TESTS_INGAME.md`](docs/TESTS_INGAME.md).
 
 ## Commandes
@@ -71,8 +71,8 @@ Tests en jeu à effectuer : voir [`docs/TESTS_INGAME.md`](docs/TESTS_INGAME.md).
 ## Architecture
 
 ```
-ForeverStuffBook/
-├── ForeverStuffBook(.toc|_Camelot.toc)
+ForeverStuffBuddy/
+├── ForeverStuffBuddy(.toc|_Camelot.toc)
 ├── Core/        Core (événements, commandes) · Compat (seule couche d'API WoW pour l'équipement)
 │                Context (solo/groupe) · Spec (spé du joueur) · Inspector (scan du groupe)
 ├── Data/        Stats (clés, emplacements) · Profiles (profils, poids)
