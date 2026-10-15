@@ -1,7 +1,7 @@
 -- Équité du loot en donjon : luajit tests/fairness.lua
 package.path = "tests/?.lua;" .. package.path
 local H = require("helpers")
-local FSB = H.load{ "Localization/frFR", "Utils/Utils", "Data/Stats", "Data/Profiles", "Core/Context", "Core/LootTracker",
+local FSB = H.load{ "Localization/frFR", "Utils/Utils", "Data/Stats", "Data/Weights", "Data/Profiles", "Core/Context", "Core/LootTracker",
     "Engine/ScoreEngine", "Engine/EquipmentOptimizer", "Engine/SetBonusEngine", "Engine/SpecEngine", "Engine/VerdictEngine",
     "Engine/ItemAnalyzer" }
 local T = H.counter(); local check = T.check

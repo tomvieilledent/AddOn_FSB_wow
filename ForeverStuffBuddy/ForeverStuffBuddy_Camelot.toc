@@ -3,7 +3,7 @@
 ## Notes: Assistant passif de décision équipement/loot (FSB). Aucune action automatique.
 ## IconTexture: Interface\AddOns\ForeverStuffBuddy\Media\logo
 ## Author: Koga / Fitaxal
-## Version: 0.12.0
+## Version: 0.12.1
 ## SavedVariables: ForeverStuffBuddyDB
 
 Localization\frFR.lua

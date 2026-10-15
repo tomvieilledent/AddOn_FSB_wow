@@ -197,7 +197,8 @@ end
 function Compat.GetPlayerUsability(link)
     local result = Compat.GetUsability(link)
     local classID, subClassID, subType = Compat.ItemClass(link)
-    local allowed = FSB.Equipment.CanUse(select(2, UnitClass("player")), Compat.PlayerLevel(),
+    local classFile = UnitClass and select(2, UnitClass("player")) or nil
+    local allowed = FSB.Equipment and FSB.Equipment.CanUse(classFile, Compat.PlayerLevel(),
         classID, subClassID, Compat.GetEquipLoc(link), Compat.CanDualWield())
     if result and result.unusable and allowed == true and classID == 2 then
         local skill = MissingWeaponSkill(result, subType)
@@ -256,7 +257,7 @@ end
 function Compat.CanDualWield()
     if CanDualWield then return CanDualWield() and true or false end
     local classFile = UnitClass and select(2, UnitClass("player"))
-    if classFile and FSB.Equipment.ARMOR[classFile] then return FSB.Equipment.DUAL_WIELD[classFile] == true end
+    if classFile and FSB.Equipment and FSB.Equipment.ARMOR[classFile] then return FSB.Equipment.DUAL_WIELD[classFile] == true end
     return true
 end
 

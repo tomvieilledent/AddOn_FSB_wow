@@ -29,9 +29,9 @@ _G.GetInventoryItemLink = function(u, slot) local g = world.group[u].gear; retur
 _G.C_SpecializationInfo = { GetInspectSpecialization = function(u) return world.group[u].specID or 0 end }
 _G.C_Timer = { NewTicker = function(_, fn) ticker = { fn = fn, cancelled = false, Cancel = function(self) self.cancelled = true end }; return ticker end }
 
-local FSB = H.load{ "Localization/frFR", "Utils/Utils", "Data/Stats", "Data/Profiles", "Data/Classes", "Core/Context", "Core/Log",
-    "Engine/SpecEngine", "Core/Compat", "Core/Spec" }
-FSB.db = { specProfiles = {} }; FSB.Profiles.Init(FSB.db)
+local FSB = H.load{ "Localization/frFR", "Utils/Utils", "Data/Stats", "Data/Weights", "Data/Profiles", "Data/Classes",
+    "Data/Equipment", "Core/Context", "Core/Log", "Engine/SpecEngine", "Core/Compat", "Core/Spec" }
+FSB.db = {}; FSB.Profiles.Init(FSB.db)
 local invalidations = 0
 FSB.Analyzer = { InvalidateAll = function() end, InvalidateGroup = function() invalidations = invalidations + 1 end }
 FSB.Compat.GetStats = function(link) return link ~= "missing" and { ITEM_MOD_STAMINA_SHORT = 1 } or nil end
@@ -132,4 +132,12 @@ world.group = {}; I.Reset(); member(1, { classFile = "DRUID", role = "TANK" }); 
 check("druide explicitement TANK : comparable", #I.GetComparableMembers() == 1)
 world.group["party1"].role = "NONE"; refresh()
 check("rôle retiré au roster : plus comparable", #I.GetComparableMembers() == 0)
+
+-- Profil comparé : moyenne des arbres du rôle, mode selon le niveau du membre
+_G.UnitLevel = function(u) return u == "party1" and 5 or 60 end
+world.group = {}; I.Reset(); member(1, { classFile = "MAGE" }); refresh(); scanAll(3)
+local m1 = I.GetComparableMembers()[1]
+check("membre niveau 5 : profil de classe bas niveau (donjon)", m1 and m1.weights == FSB.Profiles.ClassRole("MAGE", "ANY", "LOW_DUNGEON").weights)
+check("classe et niveau transmis pour le filtre d'équipement", m1.classFile == "MAGE" and m1.level == 5)
+_G.UnitLevel = nil
 T.finish("inspector")

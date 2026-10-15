@@ -28,8 +28,8 @@ Légende : ✅ attendu · 🔎 information à me rapporter
 ## 2. Stats (clés de l'API) — important
 - [ ] Après avoir survolé ~10 objets variés (armes, armures, bijoux, anneaux) : `/fsb inconnus`.
       🔎 **Me copier la liste** (clés `ITEM_MOD_*` non reconnues, p. ex. maîtrise, hâte, etc.).
-- [ ] Un objet avec des stats évidentes (ex. +Endurance, +Intelligence) : le verdict change quand on modifie le
-      poids correspondant (`/fsb poids int 0` puis `/fsb poids int 100`, survoler à nouveau).
+- [ ] Onglet **Détection** de `/fsb` : la liste des poids correspond au profil attendu (classe, spé, mode).
+- [ ] 🔎 Un objet de lanceur avec +toucher/+critique **des sorts** : la clé apparaît-elle dans `/fsb inconnus` ?
 
 ## 3. Verdicts solo (hors donjon/raid)
 - [ ] Objet clairement meilleur que le porté → **À ÉQUIPER** (vert).
@@ -46,19 +46,24 @@ Légende : ✅ attendu · 🔎 information à me rapporter
 - [ ] Changer un équipement puis re-survoler un objet du même type → verdict mis à jour (invalidation du cache).
 - [ ] Le tooltip s'affiche instantanément (pas de lag perceptible) au deuxième survol.
 - [ ] Verdict avec un objet jamais vu (données non chargées) : aucun crash ; il apparaît au survol suivant.
-- [ ] 🔎 Un objet que ma classe **ne peut pas porter** (ex. plaque pour un mage) : noter le verdict affiché
-      (limite connue : pas de vérification de classe).
+- [ ] Un objet que ma classe **ne peut pas porter** (ex. plaque pour un mage, plaque pour un guerrier < 40)
+      → inutilisable (« Non utilisable par ton personnage »). 🔎 Noter tout objet portable écarté à tort.
+- [ ] Arme d'un type autorisé pour ma classe mais **compétence pas encore apprise** → verdict normal + ligne
+      « Compétence à apprendre chez un maître d'armes : … ». 🔎 Si elle reste inutilisable : `/fsb debug` en la survolant.
 
-## 4. Spécialisation
-- [ ] `/fsb etat` → 🔎 noter la ligne `Spé : <id>` (nombre = détectée ; `?` = non détectée).
-- [ ] Si détectée : le profil actif correspond à la spé (Soigneur / Tank / Dégâts magiques / Dégâts physiques) et la
-      mention `(auto)` s'affiche.
-- [ ] Changer de spécialisation en jeu (si possible) → le profil suit automatiquement.
-- [ ] `/fsb profil Tank` puis `/fsb etat` → `(manuel)` ; `/fsb auto` → retour au profil de la spé.
-- [ ] `/fsb spe` → fenêtre « Quelle est ta spécialisation ? » avec **Auto** + une ligne par spé de ta classe
-      (🔎 noter si les noms/nombres sont corrects). Choisir une spé → le profil change ; choisir « Auto » → retour.
-- [ ] Si la spé n'est **pas** détectée à la connexion : la fenêtre de choix s'ouvre toute seule (une seule fois).
-- [ ] `/fsb specprofil <nom d'un profil>` associe la spé actuelle à ce profil.
+## 4. Spécialisation et mode (onglet Détection de `/fsb`)
+- [ ] La **spé analysée** = l'arbre où j'ai le plus de points (ex. démoniste Démonologie, mage Givre) ; les points de
+      chaque arbre sont affichés. Aucune question de rôle n'est posée.
+- [ ] Dépenser des points dans un autre arbre jusqu'à le dépasser → la spé et le profil suivent (sans `/reload`).
+- [ ] Sous le niveau 10 : « Aucune (pas de spé sous le niveau 10) », profil « Leveling 1–9 » ; en donjon :
+      « Donjons bas niveau ».
+- [ ] Niveaux 10–59 : mode « Leveling 10–59 » ; niveau 60 : « PvE 60 ».
+- [ ] `/fsbpvp` puis `/fsbpve` (ou les boutons PvE/PvP de l'accueil) → le mode et le profil changent ; le choix est
+      conservé après `/reload`.
+- [ ] Rôle affiché conforme (ex. « DPS · Mixte · CAC » pour un chaman Amélioration).
+- [ ] Lieu : Extérieur / Donjon / Raid / Champ de bataille.
+- [ ] **Druide farouche uniquement** : une fenêtre demande Ours ou Félin ; les boutons Ours/Félin apparaissent dans
+      l'onglet Détection ; `/fsb ours` et `/fsb felin` fonctionnent. Aucune autre classe ne voit cette question.
 
 ## 5. Sets
 - [ ] Avoir une pièce d'un set équipée, survoler une autre pièce du même set : le tooltip peut afficher
@@ -94,13 +99,19 @@ Prérequis : **donjon ou raid ET en groupe**. `/fsb etat` donne `Mode : GROUPE|S
 
 ## 7. Interface `/fsb`
 - [ ] La fenêtre s'affiche correctement (texte lisible, pas de chevauchement) et se ferme avec Échap / la croix.
-- [ ] Cases « Analyse activée » et « Profil automatique » fonctionnent.
-- [ ] Boutons de profils : un clic active le profil (marqué `*`).
-- [ ] Créer un profil (nom + « Créer »), le supprimer (« Supprimer » : jamais le dernier).
-- [ ] Modifier un poids dans la grille (Entrée valide) → vérifié par `/fsb poids` et le verdict.
-- [ ] Seuils : modifier « Upgrade min. », « Marge « autre » », « Valeur palier de set » → effet sur les verdicts.
+- [ ] Onglets Accueil (avec PvE/PvP), Détection, Commandes, Réglages : aucun texte qui déborde.
+- [ ] Réglages : « Analyse activée », « Icônes », « Détails », « Équité du loot », langue FR/EN.
 - [ ] Les réglages persistent après `/reload`.
 - [ ] 🔎 Capture d'écran de la fenêtre si l'aspect est mauvais.
+
+## 9. Armes et sacs
+- [ ] Bâton porté, main gauche (orbe, bouclier) dans le sac, survoler une arme de main droite : si l'ensemble est
+      meilleur → À ÉQUIPER + « À équiper avec, en main gauche : … (dans ton sac) » + « Remplace : [bâton] ».
+- [ ] Même chose en survolant la main gauche avec une arme de main droite dans le sac.
+- [ ] Classe ambidextre : une arme portée peut être proposée « (change de main) ».
+- [ ] Classe sans ambidextrie : jamais d'arme proposée en main gauche.
+- [ ] Ranger/retirer une arme du sac → le verdict se met à jour au survol suivant.
+- [ ] Survoler une arme déjà portée : pas de « À ÉQUIPER ».
 
 ## 8. Compatibilité
 - [ ] Aucune erreur Lua au login, au changement de zone, en combat, en changeant d'équipement.

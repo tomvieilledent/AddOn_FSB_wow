@@ -1,11 +1,12 @@
 -- Journal des hésitations : luajit tests/log.lua
 package.path = "tests/?.lua;" .. package.path
 local H = require("helpers")
-local FSB = H.load{ "Localization/frFR", "Utils/Utils", "Data/Stats", "Data/Profiles", "Core/Compat",
-    "Core/Context", "Core/Log", "Engine/ScoreEngine", "Engine/EquipmentOptimizer", "Engine/SetBonusEngine",
+local FSB = H.load{ "Localization/frFR", "Utils/Utils", "Data/Stats", "Data/Weights", "Data/Profiles", "Data/Equipment",
+    "Core/Compat", "Core/Context", "Core/Log", "Engine/ScoreEngine", "Engine/EquipmentOptimizer", "Engine/SetBonusEngine",
     "Engine/SpecEngine", "Engine/VerdictEngine", "Engine/ItemAnalyzer" }
 local T = H.counter(); local check = T.check
 FSB.db = {}; FSB.Profiles.Init(FSB.db)
+FSB.db.activeProfile = FSB.Profiles.For("PRIEST", 2, "PVE").name
 
 FSB.Log.Add("TEST", { link = "L1" }); FSB.Log.Add("TEST", { link = "L1" }); FSB.Log.Add("TEST", { link = "L2" })
 check("dédoublonnage par raison + objet", FSB.Log.Count() == 2 and FSB.db.log[1].count == 2)

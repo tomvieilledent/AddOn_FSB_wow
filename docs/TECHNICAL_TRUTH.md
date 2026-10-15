@@ -30,8 +30,8 @@ L'existence ne prouve ni les retours ni l'absence de valeurs « secrètes » : v
 Addon passif : aucune action de jeu, aucune simulation d'entrée, aucune API protégée. Voir `docs/COMPLIANCE.md`.
 
 ## Limitations connues
-- Pas de filtre de classe/armure/arme (écart avec le cahier des charges §3).
-- Poids par défaut génériques, non sourcés.
+- Filtre de classe/armure/arme : lignes rouges du tooltip + table Classic `Data/Equipment.lua` (UNVERIFIED sur Forever).
+- Poids par classe/arbre/mode : estimations indicatives (`Data/Weights.lua`), non validées par un simulateur.
 
 ## Données lues en jeu (VERIFIED, 2026-10-07, prêtre)
 - Clés de stats : `ITEM_MOD_INTELLECT_SHORT`, `ITEM_MOD_SPIRIT_SHORT`, `ITEM_MOD_SPELL_HEALING_DONE_SHORT`,
@@ -43,8 +43,9 @@ Addon passif : aucune action de jeu, aucune simulation d'entrée, aucune API pro
   Prêtre 1487, Chaman 1489, Mage 1482, Démoniste 1490, Druide 1484. Toutes `role=DAMAGER` (placeholder). Rôle de groupe : `NONE`.
   Conséquence : l'API ne donne que la CLASSE. Sacré/Discipline/Ombre, Givre/Feu, Féral tank/dps ne sont pas lisibles par la spé.
 - `GetNumTalentTabs`/`GetTalentInfo` : absents ou non listés par `/fsb etat` (à confirmer via la sonde de talents).
-- Conséquences produit : rôle du joueur = question en cas de doute (mémorisée) ; autre joueur comparable seulement si sa classe n'a
-  qu'un rôle ; spé réelle (arbre de talents) = IMPOSSIBLE tant qu'aucune API de talents n'est confirmée.
+- Conséquences produit (historique) : rôle du joueur = question en cas de doute ; spé réelle impossible sans API de talents.
+  Depuis la v0.12 : spé = arbre le plus investi lu par C_Traits (voir ci-dessous), sans question ; autre joueur comparable
+  si sa classe n'a qu'un rôle ou s'il est HEALER/TANK explicite.
 
 ## Talents et stats (VERIFIED, 2026-10-07)
 - Talents : système moderne présent (`C_ClassTalents.GetActiveConfigID` = 11051557, `C_Traits.GetConfigInfo/GetTreeNodes/GetNodeInfo/GetEntryInfo/GetDefinitionInfo`, `GenerateInspectImportString`, `HasValidInspectData`). Ancien système (`GetNumTalentTabs`, `GetTalentTabInfo`) : absent.

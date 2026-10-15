@@ -49,8 +49,9 @@ check("TOC identiques", files("ForeverStuffBuddy/ForeverStuffBuddy.toc") == file
 _G.GetLocale = function() return "deDE" end
 handlers.onEvent(nil, "ADDON_LOADED", "ForeverStuffBuddy")
 check("client non français : interface en anglais par défaut", FSB.language == "enUS")
-check("schéma des SavedVariables à jour", FSB.db.schema == 4)
-check("SavedVariables initialisées", ForeverStuffBuddyDB and FSB.db.enabled and #FSB.db.profiles == 10)
+check("schéma des SavedVariables à jour", FSB.db.schema == 5)
+check("SavedVariables initialisées", ForeverStuffBuddyDB and FSB.db.enabled and #FSB.db.profiles == 102)
+check("anciens choix de rôle manuels supprimés", FSB.db.specChoice == nil)
 
 local tt = { n = {}, GetItem = function(s) return "x", s.link end,
     AddLine = function(s, t) s.n[#s.n + 1] = t end, AddDoubleLine = function(s, t) s.n[#s.n + 1] = t end, Show = function() end }
@@ -131,8 +132,15 @@ local t3 = { n = {}, GetItem = function() return "x", "ring" end,
     AddLine = function(s, t) s.n[#s.n + 1] = t end, AddDoubleLine = function(s, t) s.n[#s.n + 1] = t end, Show = function() end }
 hooks.tooltip(t3)
 check("options : sans icône ni détails", #t3.n == 3 and not t3.n[2]:find("|T", 1, true))
+-- Style de jeu PvE / PvP et forme du druide farouche
+SlashCmdList.FSBPVP(""); check("/fsbpvp", FSB.db.playstyle == "PVP")
+SlashCmdList.FSBPVE(""); check("/fsbpve", FSB.db.playstyle == "PVE")
+SlashCmdList.FSB("pvp"); check("/fsb pvp", FSB.db.playstyle == "PVP")
+SlashCmdList.FSB("pve")
+SlashCmdList.FSB("ours"); check("/fsb ours", FSB.db.feralForm == "BEAR")
+SlashCmdList.FSB("felin"); check("/fsb felin", FSB.db.feralForm == "CAT")
 SlashCmdList.FSB(""); SlashCmdList.FSB("")  -- ouvre puis ferme la fenêtre : construction réelle de l'interface
-FSB.UI.ShowRolePicker(); FSB.UI.ShowText("test")
+FSB.UI.Refresh(); FSB.UI.ShowFeralPicker(); FSB.UI.ShowText("test")
 local uiErrors = {}
 for _, line in ipairs(printed) do if tostring(line):find("UI : ", 1, true) then uiErrors[#uiErrors + 1] = line end end
 check("interface : aucune erreur de construction" .. (uiErrors[1] and (" -> " .. uiErrors[1]) or ""), #uiErrors == 0)

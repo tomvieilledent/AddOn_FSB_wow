@@ -1,7 +1,7 @@
 -- Tests purs du moteur (hors jeu) : luajit tests/run.lua
 local FSB = {}
 local base = "ForeverStuffBuddy/"
-for _, f in ipairs{ "Localization/frFR", "Utils/Utils", "Data/Stats", "Data/Profiles",
+for _, f in ipairs{ "Localization/frFR", "Utils/Utils", "Data/Stats", "Data/Weights", "Data/Profiles",
     "Engine/ScoreEngine", "Engine/EquipmentOptimizer", "Engine/VerdictEngine" } do
     assert(loadfile(base .. f .. ".lua"))("FSB", FSB)
 end
@@ -9,11 +9,14 @@ FSB.db = {}
 FSB.Profiles.Init(FSB.db)
 
 local S = FSB.Stats.SLOT
-local HEAL, MAGE, PHYS = FSB.db.profiles[1], FSB.db.profiles[2], FSB.db.profiles[3]
+-- Profils de référence : prêtre Sacré (soigneur), guerrier Armes (physique), mage Givre (magique), en PvE 60.
+local HEAL = FSB.Profiles.For("PRIEST", 2, "PVE")
+local PHYS = FSB.Profiles.For("WARRIOR", 1, "PVE")
+local MAGE = FSB.Profiles.For("MAGE", 3, "PVE")
 local function item(stats, twoHand) return { stats = stats, twoHand = twoHand } end
 local function solo(loc, stats, equipped, active, dw)
     return FSB.Verdict.Solo({ equipLoc = loc, stats = stats, equipped = equipped,
-        canDualWield = dw ~= false, profiles = FSB.db.profiles, active = active or HEAL })
+        canDualWield = dw ~= false, profiles = { HEAL, PHYS, MAGE }, active = active or HEAL })
 end
 
 local fails, total = 0, 0
@@ -23,7 +26,8 @@ local function check(name, cond)
 end
 
 local HP, INT, AP = "ITEM_MOD_SPELL_HEALING_DONE_SHORT", "ITEM_MOD_INTELLECT_SHORT", "ITEM_MOD_ATTACK_POWER_SHORT"
-local SP = "ITEM_MOD_SPELL_DAMAGE_DONE_SHORT"
+
+check("profils de référence trouvés", HEAL and PHYS and MAGE and HEAL.name == "Prêtre · Sacré · PvE 60")
 
 -- objet supérieur / inférieur
 local worn = { [S.CHEST] = item{ [HP] = 20, [INT] = 10 } }
@@ -33,7 +37,7 @@ check("inférieur (soigneur) -> pas équiper", solo("INVTYPE_CHEST", { [HP] = 10
 check("différence minuscule", solo("INVTYPE_CHEST", { [HP] = 20, [INT] = 10, ITEM_MOD_STAMINA_SHORT = 1 }, worn).kind ~= "EQUIP")
 -- off-spé : bon pour dégâts physiques, inutile pour le soigneur
 local r = solo("INVTYPE_CHEST", { [AP] = 80 }, worn, HEAL)
-check("off-spé", r.kind == "OFFSPEC" and r.profile == "Dégâts physiques")
+check("off-spé", r.kind == "OFFSPEC" and r.profile == PHYS.name)
 -- objet inutile
 check("inutile", solo("INVTYPE_CHEST", { ITEM_MOD_UNKNOWN = 50 }, worn).kind == "SELL")
 -- emplacement vide
@@ -65,6 +69,7 @@ check("sans DW : main droite uniquement", slot == S.MAINHAND)
 -- seuil configurable
 FSB.db.thresholds = { upgradeRel = 0.6, upgradeAbs = 1 }
 check("seuil relevé", solo("INVTYPE_CHEST", { [HP] = 30, [INT] = 15 }, worn).kind ~= "EQUIP")
+FSB.db.thresholds = nil
 
 print(("%d/%d tests OK"):format(total - fails, total))
 os.exit(fails == 0 and 0 or 1)

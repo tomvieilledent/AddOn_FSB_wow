@@ -6,12 +6,12 @@ local T = H.counter(); local check = T.check
 local f = assert(io.open("ForeverStuffBuddy/Media/logo.tga", "rb"))
 local header = f:read(18); local size = f:seek("end"); f:close()
 local colorType, w, h, bpp = header:byte(3), header:byte(13) + header:byte(14) * 256, header:byte(15) + header:byte(16) * 256, header:byte(17)
-local function pow2(n) return n > 0 and (n & (n - 1)) == 0 end
+local function pow2(n) while n > 1 and n % 2 == 0 do n = n / 2 end; return n == 1 end -- compatible Lua 5.1 / LuaJIT
 check("logo TGA non compressé 32 bits", colorType == 2 and bpp == 32)
 check("logo TGA : dimensions puissances de 2", w == h and pow2(w) and w <= 512)
 check("logo TGA : taille cohérente", size == 18 + w * h * 4 or size >= 18 + w * h * 4)
 
-local function read(p) local h = assert(io.open(p)); local s = h:read("a"); h:close(); return s end
+local function read(p) local h = assert(io.open(p)); local s = h:read("*a"); h:close(); return s end
 for _, toc in ipairs({ "ForeverStuffBuddy/ForeverStuffBuddy.toc", "ForeverStuffBuddy/ForeverStuffBuddy_Camelot.toc" }) do
     check(toc .. " : icône d'addon", read(toc):find("IconTexture: Interface\\AddOns\\ForeverStuffBuddy\\Media\\logo", 1, true))
 end

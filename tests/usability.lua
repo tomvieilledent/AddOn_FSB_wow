@@ -1,11 +1,12 @@
 -- Utilisabilité (classe/armure/arme/niveau) : luajit tests/usability.lua
 package.path = "tests/?.lua;" .. package.path
 local H = require("helpers")
-local FSB = H.load{ "Localization/frFR", "Utils/Utils", "Data/Stats", "Data/Profiles", "Core/Compat",
-    "Core/Context", "Engine/ScoreEngine", "Engine/EquipmentOptimizer", "Engine/SetBonusEngine",
+local FSB = H.load{ "Localization/frFR", "Utils/Utils", "Data/Stats", "Data/Weights", "Data/Profiles", "Data/Equipment",
+    "Core/Compat", "Core/Context", "Engine/ScoreEngine", "Engine/EquipmentOptimizer", "Engine/SetBonusEngine",
     "Engine/SpecEngine", "Engine/VerdictEngine", "Engine/ItemAnalyzer" }
 local T = H.counter(); local check = T.check
 FSB.db = {}; FSB.Profiles.Init(FSB.db)
+FSB.db.activeProfile = FSB.Profiles.For("PRIEST", 2, "PVE").name
 
 _G.ITEM_MIN_LEVEL = "Requires Level %d"
 _G.UnitLevel = function() return 20 end

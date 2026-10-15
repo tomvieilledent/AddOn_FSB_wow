@@ -130,7 +130,7 @@ local function StoreMember(guid, unit)
     local equipped, complete = ReadEquipment(unit)
     members[guid] = {
         name = UnitName(unit), classID = select(3, UnitClass(unit)), classFile = select(2, UnitClass(unit)),
-        specID = ReadSpec(unit), equipped = equipped, groupRole = ExplicitRole(unit), level = UnitLevel(unit),
+        specID = ReadSpec(unit), equipped = equipped, groupRole = ExplicitRole(unit), level = UnitLevel and UnitLevel(unit) or nil,
         complete = complete or attempts >= MAX_ATTEMPTS, attempts = attempts,
     }
     if not MemberProfile(members[guid]) then
