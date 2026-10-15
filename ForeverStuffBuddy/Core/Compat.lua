@@ -110,7 +110,7 @@ function Compat.GetUsability(link)
     if not ok or type(data) ~= "table" or type(data.lines) ~= "table" then return nil end
     if TooltipUtil and TooltipUtil.SurfaceArgs then pcall(TooltipUtil.SurfaceArgs, data) end
     local levelPattern = FormatPattern(_G.ITEM_MIN_LEVEL)
-    local result = { unusable = false }
+    local result = { unusable = false, red = {} }
     for _, line in ipairs(data.lines) do
         for _, side in ipairs({ "left", "right" }) do
             local text, color = line[side .. "Text"], line[side .. "Color"]
@@ -120,6 +120,7 @@ function Compat.GetUsability(link)
                     result.reqLevel = tonumber(n)
                 else
                     result.unusable = true
+                    result.red[#result.red + 1] = { text = text, side = side }
                 end
             end
         end
@@ -169,9 +170,93 @@ function Compat.GetAllEquipped()
     return equipped
 end
 
--- Si l'API n'existe pas, on suppose que oui (pas d'invention d'une restriction).
+-- Classe et sous-classe de l'objet (arme 2, armure 4) et nom du sous-type, ou nil.
+function Compat.ItemClass(link)
+    local fn = (C_Item and C_Item.GetItemInfoInstant) or GetItemInfoInstant
+    if not link or not fn then return nil end
+    local ok, _, _, subType, _, _, classID, subClassID = pcall(fn, link)
+    if ok then return classID, subClassID, subType end
+end
+
+-- Arme dont la seule restriction rouge est le type d'arme (affiché à droite de la ligne « Deux mains | Hache ») :
+-- compétence d'arme pas encore apprise chez un maître d'armes. Retourne le nom du type, ou nil.
+local function MissingWeaponSkill(result, subType)
+    if not result or not result.red or #result.red == 0 then return nil end
+    local skill
+    for _, r in ipairs(result.red) do
+        if r.side ~= "right" and r.text ~= subType then return nil end
+        skill = r.text
+    end
+    return skill
+end
+
+-- Le personnage peut-il porter l'objet ? Lignes rouges du tooltip d'abord, puis la table Classic des classes
+-- (Data/Equipment.lua) pour un objet que la classe ne peut jamais porter ou si le tooltip est illisible.
+-- Une arme que la classe peut apprendre mais dont la compétence manque reste analysée (needsSkill = type d'arme).
+-- Retourne { unusable = bool, reqLevel = n|nil, needsSkill = texte|nil } ou nil si rien n'est lisible.
+function Compat.GetPlayerUsability(link)
+    local result = Compat.GetUsability(link)
+    local classID, subClassID, subType = Compat.ItemClass(link)
+    local allowed = FSB.Equipment.CanUse(select(2, UnitClass("player")), Compat.PlayerLevel(),
+        classID, subClassID, Compat.GetEquipLoc(link), Compat.CanDualWield())
+    if result and result.unusable and allowed == true and classID == 2 then
+        local skill = MissingWeaponSkill(result, subType)
+        if skill then result.unusable, result.needsSkill = false, skill end
+    end
+    if allowed == false then
+        result = result or {}
+        result.unusable = true
+    elseif allowed == true and not result then
+        result = { unusable = false } -- tooltip illisible, mais la table de classe autorise l'objet
+    end
+    return result
+end
+
+-- Types d'objets qui occupent les mains (combinaisons arme 2M / main droite / main gauche).
+Compat.WEAPON_LOCS = {
+    INVTYPE_WEAPON = true, INVTYPE_2HWEAPON = true, INVTYPE_WEAPONMAINHAND = true,
+    INVTYPE_WEAPONOFFHAND = true, INVTYPE_SHIELD = true, INVTYPE_HOLDABLE = true,
+}
+
+local function BagSlots(bag)
+    if C_Container and C_Container.GetContainerNumSlots then return C_Container.GetContainerNumSlots(bag) or 0 end
+    if GetContainerNumSlots then return GetContainerNumSlots(bag) or 0 end
+    return 0
+end
+
+local function BagLink(bag, slot)
+    if C_Container and C_Container.GetContainerItemLink then return C_Container.GetContainerItemLink(bag, slot) end
+    if GetContainerItemLink then return GetContainerItemLink(bag, slot) end
+end
+
+-- Armes et mains gauches des sacs que le personnage peut équiper maintenant (classe, type, niveau).
+-- { { link, stats, equipLoc, from = "BAG" } }. Un objet à l'utilisabilité illisible est gardé (rien d'inventé).
+function Compat.GetBagWeapons()
+    local list = {}
+    for bag = 0, (NUM_BAG_SLOTS or 4) do
+        for slot = 1, BagSlots(bag) do
+            local link = BagLink(bag, slot)
+            local loc = link and Compat.GetEquipLoc(link)
+            if loc and Compat.WEAPON_LOCS[loc] then
+                local stats = Compat.GetStats(link)
+                local usable = Compat.GetPlayerUsability(link)
+                -- Partenaire de combinaison : seulement une arme équipable tout de suite (compétence connue).
+                local ok = not usable or (not usable.unusable and not usable.needsSkill
+                    and not (usable.reqLevel and usable.reqLevel > Compat.PlayerLevel()))
+                if stats and next(stats) and ok then
+                    list[#list + 1] = { link = link, stats = stats, equipLoc = loc, from = "BAG" }
+                end
+            end
+        end
+    end
+    return list
+end
+
+-- Si l'API n'existe pas : table Classic des classes (Data/Equipment.lua), sinon oui (aucune restriction inventée).
 function Compat.CanDualWield()
     if CanDualWield then return CanDualWield() and true or false end
+    local classFile = UnitClass and select(2, UnitClass("player"))
+    if classFile and FSB.Equipment.ARMOR[classFile] then return FSB.Equipment.DUAL_WIELD[classFile] == true end
     return true
 end
 

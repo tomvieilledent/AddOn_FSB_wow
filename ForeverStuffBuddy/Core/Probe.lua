@@ -140,8 +140,8 @@ function Probe.Specs(add)
     else
         local parts = {}
         for i, t in ipairs(trees) do parts[i] = tostring(t.name) .. "=" .. t.points end
-        local _, name = FSB.Spec.ActiveTree()
-        add("LECTURE DES TALENTS : " .. table.concat(parts, ", ") .. " -> arbre actif : " .. tostring(name or "aucun/égalité"))
+        local tree = FSB.Spec.Tree()
+        add("LECTURE DES TALENTS : " .. table.concat(parts, ", ") .. " -> arbre retenu : " .. tostring(trees[tree] and trees[tree].name or tree))
     end
     add("libellé affiché par /fsb : " .. FSB.Spec.Label())
     local classID = select(3, UnitClass("player"))
@@ -272,10 +272,9 @@ function Probe.Environment()
     add("profil actif : " .. tostring(FSB.db and FSB.db.activeProfile) .. " | analyse activée=" .. tostring(FSB.db and FSB.db.enabled))
     local d = FSB.db and FSB.db.display or {}
     add("affichage : icônes=" .. tostring(d.icons ~= false) .. " détails=" .. tostring(d.details ~= false))
-    local choices = {}
-    for k, v in pairs(FSB.db and FSB.db.specChoice or {}) do choices[#choices + 1] = k .. "=" .. v end
-    table.sort(choices)
-    add("rôles mémorisés : " .. (#choices > 0 and table.concat(choices, ", ") or "aucun"))
+    local tree, detected = FSB.Spec.Tree()
+    add("arbre retenu : " .. tostring(tree) .. (detected and " (talents)" or " (repli : aucun point lisible)")
+        .. " | mode : " .. tostring(FSB.Context.Mode()))
     return lines
 end
 

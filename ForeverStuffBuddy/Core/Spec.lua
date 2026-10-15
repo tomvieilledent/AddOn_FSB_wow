@@ -1,7 +1,7 @@
 local _, FSB = ...
 
 -- Spécialisation du joueur : détection par l'API uniquement (aucun mode manuel).
--- Le profil actif suit toujours la spécialisation ; une question de rôle n'est posée que si la spé en a plusieurs.
+-- Le profil actif suit toujours l'arbre de talents le plus investi et le mode de jeu ; aucune question n'est posée.
 local Spec = {}
 FSB.Spec = Spec
 
@@ -134,82 +134,99 @@ function Spec.ActiveTree()
     return FSB.SpecEngine.ActiveTree(Spec.ReadTrees())
 end
 
--- Clé de mémorisation du choix : classe détectée + arbre actif.
-function Spec.Key(specID)
-    local tree = Spec.ActiveTree()
-    return tostring(specID) .. ":" .. tostring(tree or 0)
-end
-
--- Profils possibles : table par spé, sinon selon l'arbre actif, sinon rôles de la classe.
-function Spec.Choices(specID)
-    local tree = Spec.ActiveTree()
-    local byTree = tree and FSB.Classes.TREES[ClassFile() or ""]
-    local names = FSB.Classes.BY_SPEC[specID] or (byTree and byTree[tree]) or FSB.Classes.ROLES[ClassFile() or ""]
-    return FSB.SpecEngine.ByNames(names, FSB.Profiles.List())
-end
-
--- Vrai si la spé a plusieurs rôles possibles et que l'utilisateur n'a pas encore choisi.
-function Spec.NeedsChoice()
-    local specID = Spec.Current()
-    if not specID then return false end
-    local chosen = FSB.db.specChoice[Spec.Key(specID)]
-    if chosen and FSB.Profiles.Find(chosen) then return false end
-    local ambiguous = #Spec.Choices(specID) > 1
-    if ambiguous then FSB.Log.Add("ROLE_AMBIGU", { detail = "clé " .. Spec.Key(specID), global = true }) end
-    return ambiguous
-end
-
--- Mémorise le rôle choisi pour la spé actuelle et applique le profil.
-function Spec.Choose(profileName)
-    local specID = Spec.Current()
-    if not specID or not FSB.Profiles.Find(profileName) then return false end
-    FSB.db.specChoice[Spec.Key(specID)] = profileName
-    FSB.Profiles.SetActive(profileName)
-    return true
-end
-
--- Applique le profil de la spé : choix mémorisé, sinon rôle unique possible, sinon (rôles multiples) le profil
--- reste inchangé en attendant le choix (Spec.NeedsChoice).
--- Retourne false si aucune spé n'est détectée (journalisé : la détection doit fonctionner).
-function Spec.Apply()
-    local specID = Spec.Current()
-    if not specID then return false end
-    local name = FSB.db.specChoice[Spec.Key(specID)]
-    if not (name and FSB.Profiles.Find(name)) then
-        local choices = Spec.Choices(specID)
-        if #choices == 1 then
-            name = choices[1].name
-        elseif #choices == 0 then
-            local p = FSB.SpecEngine.ProfileForSpec(specID, SpecInfo(specID), FSB.Profiles.List(), nil)
-            name = p and p.name
-        else
-            name = nil
-        end
+-- Arbre de la spé, entièrement automatique (aucune question) : l'arbre le plus investi en points de talents.
+-- Égalité : le dernier arbre détecté s'il fait partie des ex æquo, sinon le premier d'entre eux.
+-- Aucun point (bas niveau) ou talents illisibles : le dernier arbre détecté pour cette classe, sinon le premier.
+-- Retourne (index, détecté) : détecté = false quand l'arbre vient du repli.
+function Spec.Tree()
+    local class = ClassFile() or ""
+    FSB.db.lastTree = FSB.db.lastTree or {}
+    local last = FSB.db.lastTree[class]
+    local trees = Spec.ReadTrees()
+    local best, tied = 0, {}
+    for i, t in ipairs(trees or {}) do
+        if t.points > best then best, tied = t.points, { i }
+        elseif t.points == best and best > 0 then tied[#tied + 1] = i end
     end
-    if name and name ~= FSB.db.activeProfile then FSB.Profiles.SetActive(name) end
+    if best > 0 then
+        local tree = tied[1]
+        for _, i in ipairs(tied) do if i == last then tree = i end end
+        FSB.db.lastTree[class] = tree
+        return tree, true
+    end
+    return last or 1, false
+end
+
+-- Profil de la spé (arbre de talents) dans le mode de jeu actuel, ou nil si la classe n'a pas de poids.
+-- Sous le niveau 10 il n'y a pas de spé : profil de classe (arbre 0).
+function Spec.Profile()
+    local mode = FSB.Context.Mode()
+    local tree = mode:find("^LOW_") and 0 or Spec.Tree()
+    local variant = (ClassFile() == "DRUID" and tree == 2) and FSB.db.feralForm or nil
+    return FSB.Profiles.For(ClassFile() or "", tree, mode, variant)
+end
+
+-- Vrai si le personnage est un druide farouche (arbre 2, niveau 10+) : seul cas où ours/félin se choisit.
+function Spec.IsFeral()
+    if ClassFile() ~= "DRUID" or FSB.Context.Mode():find("^LOW_") then return false end
+    return Spec.Tree() == 2
+end
+
+-- Applique le profil de la spé et du mode. Retourne false si la classe n'a aucun profil.
+-- Druide farouche sans forme choisie : demande ours ou félin (félin en attendant la réponse).
+function Spec.Apply()
+    local p = Spec.Profile()
+    if not p then return false end
+    if p.name ~= FSB.db.activeProfile then FSB.Profiles.SetActive(p.name) end
+    if FSB.UI and FSB.UI.Refresh then FSB.UI.Refresh() end
+    if not FSB.db.feralForm and Spec.IsFeral() and FSB.UI and FSB.UI.ShowFeralPicker then FSB.UI.ShowFeralPicker() end
     return true
 end
 
--- Ouvre la question de rôle si nécessaire.
-function Spec.PromptIfNeeded()
-    if Spec.NeedsChoice() and FSB.UI and FSB.UI.ShowRolePicker then FSB.UI.ShowRolePicker() end
-end
-
--- Profils testés pour OFF-SPÉ : ceux que la classe peut tenir (rôles de la classe), sinon tous.
+-- Profils testés pour OFF-SPÉ : les autres arbres de la classe, dans le même mode.
 function Spec.OffspecProfiles()
-    local names = FSB.Classes.ROLES[ClassFile() or ""]
-    return FSB.SpecEngine.FilterByNames(FSB.Profiles.List(), names, FSB.Profiles.IsBuiltin,
-        FSB.db.activeProfile, FSB.db.specChoice)
+    return FSB.Profiles.ForClass(ClassFile() or "", FSB.Context.Mode())
 end
 
--- Libellé : « Spé : Prêtre · Sacré · Soigneur » si l'arbre de talents est lisible, sinon « Classe : Prêtre · Soigneur ».
+-- Tout ce que FSB a détecté, en texte (onglet Détection) :
+-- { class, spec, role, level, mode, place, profile }.
+function Spec.Describe()
+    local L, Context = FSB.L, FSB.Context
+    local class = ClassFile() or ""
+    local d = {}
+    d.class = (L.CLASS_NAMES and L.CLASS_NAMES[class]) or (UnitClass("player")) or "?"
+
+    local mode = Context.Mode()
+    if mode:find("^LOW_") then
+        d.spec = L.DET_NOSPEC
+    else
+        local tree, detected = Spec.Tree()
+        local names = L.TREE_NAMES and L.TREE_NAMES[class]
+        local points = {}
+        for i, t in ipairs(Spec.ReadTrees() or {}) do
+            points[i] = ((names and names[i]) or ("#" .. i)) .. " " .. t.points
+        end
+        d.spec = ((names and names[tree]) or ("#" .. tree))
+            .. (#points > 0 and ("  (" .. table.concat(points, " · ") .. ")") or "")
+            .. (detected and "" or ("  " .. L.DET_FALLBACK))
+    end
+
+    local p = FSB.Profiles.GetActive()
+    d.role = FSB.Profiles.RoleLabel(p)
+    local level = (UnitLevel and UnitLevel("player")) or 0
+    local bracket = (level < Context.SPEC_LEVEL and "1–9") or (level < Context.MAX_LEVEL and "10–59") or "60"
+    d.level = ("%d  (%s)"):format(level, bracket)
+    local style = Context.Playstyle()
+    d.mode = L.PLAYSTYLES[style] .. "  →  " .. ((L.MODES and L.MODES[mode]) or mode)
+        .. (mode:find("^LOW_") and ("  " .. L.DET_LOW_NOTE) or "")
+    d.place = L.PLACES[Context.Place()] or Context.Place()
+    d.profile = p and FSB.Profiles.DisplayName(p.name) or "?"
+    return d
+end
+
+-- Libellé : « Spé : Mage · Givre · PvE 60 » (arbre lu dans les talents) ou « Classe : ... » (arbre par défaut).
 function Spec.Label()
-    local specID = Spec.Current()
-    local info = specID and SpecInfo(specID)
-    local _, treeName = Spec.ActiveTree()
-    local class = (info and info.name) or "?"
-    local parts = { class }
-    if treeName then parts[#parts + 1] = treeName end
-    parts[#parts + 1] = FSB.Profiles.DisplayName(FSB.db.activeProfile or "?")
-    return (treeName and FSB.L.LABEL_SPEC or FSB.L.LABEL_CLASS) .. " : " .. table.concat(parts, " · ")
+    local _, detected = Spec.Tree()
+    return (detected and FSB.L.LABEL_SPEC or FSB.L.LABEL_CLASS) .. " : "
+        .. FSB.Profiles.DisplayName(FSB.db.activeProfile or "?")
 end

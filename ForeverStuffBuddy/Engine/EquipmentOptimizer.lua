@@ -49,3 +49,69 @@ function Optimizer.Evaluate(equipLoc, newStats, equipped, weights, canDualWield,
         or SlotScore(equipped, bestSlot, weights)
     return bestDelta, bestSlot, replaced
 end
+
+---------------------------------------------------------------------------------------------
+-- Armes : combinaisons complètes des deux mains, avec les objets du sac.
+---------------------------------------------------------------------------------------------
+
+local MAIN_LOCS = { INVTYPE_WEAPON = true, INVTYPE_WEAPONMAINHAND = true }
+local OFF_LOCS = { INVTYPE_SHIELD = true, INVTYPE_HOLDABLE = true }
+-- Armes en main gauche : seulement avec l'ambidextrie.
+local DUAL_LOCS = { INVTYPE_WEAPON = true, INVTYPE_WEAPONOFFHAND = true }
+
+local function CanMain(loc) return MAIN_LOCS[loc] == true end
+local function CanOff(loc, canDualWield) return OFF_LOCS[loc] == true or (canDualWield and DUAL_LOCS[loc] == true) end
+
+-- Meilleure configuration des mains qui contient le nouvel objet, comparée à la configuration portée :
+--  - 2M seule ;
+--  - nouvel objet en main droite + meilleure main gauche disponible (sac ou portée) ;
+--  - nouvel objet en main gauche + meilleure main droite disponible (sac ou portée).
+-- pool : { { link, stats, equipLoc, from = "BAG" | "EQUIPPED", slot } } (sans le nouvel objet lui-même).
+-- Retourne (gain, emplacement du nouvel objet, score porté, combo) ou nil.
+-- combo = { partner = entrée du pool ou nil, partnerSlot, replaced = { liens portés retirés } }.
+function Optimizer.EvaluateWeapons(equipLoc, newStats, equipped, pool, weights, canDualWield, adjust)
+    local current = SlotScore(equipped, S.MAINHAND, weights) + SlotScore(equipped, S.OFFHAND, weights)
+    local newScore = Score(newStats, weights)
+
+    local function BestPartner(fits)
+        local best, bestScore = nil, 0
+        for _, item in ipairs(pool or {}) do
+            if fits(item.equipLoc) then
+                local s = Score(item.stats, weights)
+                if s > bestScore then best, bestScore = item, s end
+            end
+        end
+        return best, bestScore
+    end
+
+    local options = {}
+    if equipLoc == "INVTYPE_2HWEAPON" then
+        options[#options + 1] = { slot = S.MAINHAND, score = newScore }
+    end
+    if CanMain(equipLoc) then
+        local off, s = BestPartner(function(loc) return CanOff(loc, canDualWield) end)
+        options[#options + 1] = { slot = S.MAINHAND, score = newScore + s, partner = off, partnerSlot = S.OFFHAND }
+    end
+    if CanOff(equipLoc, canDualWield) then
+        local main, s = BestPartner(CanMain)
+        options[#options + 1] = { slot = S.OFFHAND, score = newScore + s, partner = main, partnerSlot = S.MAINHAND }
+    end
+
+    local chosen, bestDelta
+    for _, o in ipairs(options) do
+        local delta = o.score - current
+        if adjust then delta = delta + adjust(o.slot) end
+        if not bestDelta or delta > bestDelta then chosen, bestDelta = o, delta end
+    end
+    if not chosen then return nil end
+
+    -- Objets portés qui quittent les mains (une arme portée réutilisée, même changée de main, reste équipée).
+    local replaced = {}
+    for _, slot in ipairs({ S.MAINHAND, S.OFFHAND }) do
+        local item = equipped[slot]
+        local stays = chosen.partner and chosen.partner.from == "EQUIPPED" and chosen.partner.slot == slot
+        if item and not stays then replaced[#replaced + 1] = item.link end
+    end
+    return bestDelta, chosen.slot, current,
+        { partner = chosen.partner, partnerSlot = chosen.partnerSlot, replaced = replaced }
+end

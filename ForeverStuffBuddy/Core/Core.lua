@@ -2,7 +2,7 @@ local ADDON, FSB = ...
 
 FSB.name = ADDON
 local defaults = {
-    enabled = true, lootFairness = true, specChoice = {},
+    enabled = true, lootFairness = true, lastTree = {},
     unknownStats = {}, display = {},
     -- thresholds : nil = valeurs par défaut du VerdictEngine
 }
@@ -25,10 +25,9 @@ local function InitDB()
     for key in pairs(FSB.db.unknownStats or {}) do
         if FSB.Stats.IsKnown(key) then FSB.db.unknownStats[key] = nil end -- reconnues depuis
     end
-    for key in pairs(FSB.db.specChoice or {}) do
-        if not tostring(key):find(":", 1, true) then FSB.db.specChoice[key] = nil end -- ancien format de clé
-    end
+    -- La spé est toujours détectée par les talents : les anciens choix de rôle manuels sont supprimés.
     FSB.db.manualSpecID, FSB.db.autoProfile, FSB.db.specPromptDone, FSB.db.specProfiles = nil, nil, nil, nil
+    FSB.db.specChoice = nil
     FSB.build = (select(1, GetBuildInfo and GetBuildInfo() or "?") or "?") .. " v" .. FSB.Utils.AddonVersion(ADDON)
     FSB.Profiles.Init(FSB.db)
 end
@@ -53,31 +52,36 @@ local function OnEnteringWorld()
     -- Les données de talents peuvent arriver un peu après la connexion.
     C_Timer.After(3, function()
         FSB.Analyzer.InvalidateAll() -- les données de spé ont pu arriver après les premiers survols
-        if FSB.Spec.Apply() then
-            FSB.Spec.PromptIfNeeded()
-        else
+        if not FSB.Spec.Apply() then
             FSB.Log.Add("SPE_NON_DETECTEE", { global = true })
         end
     end)
 end
 
+-- Talents, niveau ou zone changés : la spé (arbre le plus investi) ou le mode (leveling/PvE/PvP) peut changer.
+local function ApplySpec() FSB.Spec.Apply(); FSB.Analyzer.InvalidateAll() end
+
 local handlers = {
     PLAYER_ENTERING_WORLD = OnEnteringWorld,
     CHAT_MSG_LOOT = function(text) FSB.LootTracker.OnMessage(text) end,
-    ZONE_CHANGED_NEW_AREA = RefreshGroupState,
+    ZONE_CHANGED_NEW_AREA = function() RefreshGroupState(); FSB.Spec.Apply() end,
     GROUP_ROSTER_UPDATE = RefreshGroupState,
-    PLAYER_LEVEL_UP = function() FSB.Analyzer.InvalidateAll() end,
+    -- Le niveau renvoyé par UnitLevel n'est pas toujours à jour pendant l'événement.
+    PLAYER_LEVEL_UP = function() FSB.Analyzer.InvalidateAll(); C_Timer.After(1, ApplySpec) end,
     PLAYER_EQUIPMENT_CHANGED = function(slot) FSB.Analyzer.InvalidateSlot(slot) end,
+    -- Sacs changés : les combinaisons d'armes avec le sac sont recalculées.
+    BAG_UPDATE_DELAYED = function() FSB.Analyzer.InvalidateWeapons() end,
     INSPECT_READY = function(guid) FSB.Inspector.OnInspectReady(guid) end,
     UNIT_INVENTORY_CHANGED = function(unit) FSB.Inspector.OnUnitInventoryChanged(unit) end,
     PLAYER_SPECIALIZATION_CHANGED = function(unit)
-        if unit == nil or unit == "player" then FSB.Spec.Apply(); FSB.Spec.PromptIfNeeded() end
+        if unit == nil or unit == "player" then ApplySpec() end
     end,
-    -- Changement de talents : l'arbre actif (donc le rôle possible) peut changer. Événements Classic/moderne ;
+    -- Changement de talents : l'arbre le plus investi peut changer. Événements Classic/moderne ;
     -- ceux qui n'existent pas sur Forever sont ignorés à l'enregistrement.
-    PLAYER_TALENT_UPDATE = function() FSB.Spec.Apply(); FSB.Spec.PromptIfNeeded(); FSB.Analyzer.InvalidateAll() end,
-    CHARACTER_POINTS_CHANGED = function() FSB.Spec.Apply(); FSB.Spec.PromptIfNeeded(); FSB.Analyzer.InvalidateAll() end,
-    ACTIVE_PLAYER_SPECIALIZATION_CHANGED = function() FSB.Spec.Apply(); FSB.Spec.PromptIfNeeded() end,
+    PLAYER_TALENT_UPDATE = ApplySpec,
+    CHARACTER_POINTS_CHANGED = ApplySpec,
+    TRAIT_CONFIG_UPDATED = ApplySpec,
+    ACTIVE_PLAYER_SPECIALIZATION_CHANGED = ApplySpec,
 }
 
 local frame = CreateFrame("Frame")
@@ -102,6 +106,31 @@ end)
 local Commands = {}
 local Print = FSB.Utils.Print
 
+-- Style de jeu PvE / PvP (sans effet sous le niveau 10 : pas de spé ni de poids PvP).
+function FSB.SetPlaystyle(style)
+    FSB.db.playstyle = style == "PVP" and "PVP" or "PVE"
+    FSB.Spec.Apply()
+    FSB.Analyzer.InvalidateAll()
+    Print(FSB.L.PLAYSTYLE_SET:format(FSB.L.PLAYSTYLES[FSB.db.playstyle]))
+    if FSB.UI and FSB.UI.Refresh then FSB.UI.Refresh() end
+end
+
+-- Druide farouche : forme jouée, "BEAR" (ours, tank) ou "CAT" (félin, DPS).
+function FSB.SetFeralForm(form)
+    FSB.db.feralForm = form == "BEAR" and "BEAR" or "CAT"
+    FSB.Spec.Apply()
+    FSB.Analyzer.InvalidateAll()
+    Print(FSB.L.FERAL_SET:format(FSB.L.FERAL_FORMS[FSB.db.feralForm]))
+    if FSB.UI and FSB.UI.Refresh then FSB.UI.Refresh() end
+end
+
+function Commands.ours() FSB.SetFeralForm("BEAR") end
+function Commands.felin() FSB.SetFeralForm("CAT") end
+Commands.bear, Commands.cat, Commands["félin"] = Commands.ours, Commands.felin, Commands.felin
+
+function Commands.pvp() FSB.SetPlaystyle("PVP") end
+function Commands.pve() FSB.SetPlaystyle("PVE") end
+
 function Commands.on()  FSB.db.enabled = true;  Print(FSB.L.ENABLED) end
 function Commands.off() FSB.db.enabled = false; Print(FSB.L.DISABLED) end
 
@@ -118,8 +147,6 @@ function Commands.lang(rest)
     FSB.SetLanguage(code)
     Print(FSB.L.LANG_CHANGED)
 end
-
-function Commands.role() if FSB.UI and FSB.UI.ShowRolePicker then FSB.UI.ShowRolePicker(true) end end
 
 function Commands.specs() FSB.Probe.AllSpecs() end
 
@@ -208,3 +235,8 @@ SlashCmdList["FSB"] = function(input)
     if cmd == "" and FSB.UI and FSB.UI.Toggle then return FSB.UI.Toggle() end
     Commands.aide()
 end
+
+SLASH_FSBPVP1 = "/fsbpvp"
+SlashCmdList["FSBPVP"] = Commands.pvp
+SLASH_FSBPVE1 = "/fsbpve"
+SlashCmdList["FSBPVE"] = Commands.pve

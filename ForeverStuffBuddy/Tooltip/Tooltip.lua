@@ -45,7 +45,22 @@ local function AddDetails(tooltip, verdict)
     local details = Option("details")
     if verdict.unusable then tooltip:AddLine(L.UNUSABLE, unpack(GREY)) end
     if verdict.reqLevel then tooltip:AddLine(L.REQ_LEVEL:format(verdict.reqLevel), 1, 0.6, 0.2) end
+    if verdict.needsSkill then tooltip:AddLine(L.NEEDS_SKILL:format(verdict.needsSkill), 1, 0.6, 0.2) end
     if verdict.unknownStats then tooltip:AddLine(L.UNKNOWN_STATS, 1, 0.6, 0.2) end
+    -- Armes : avec quelle autre arme l'équiper (sac ou autre main) et ce qu'elle remplace.
+    local combo = verdict.combo
+    if combo and (verdict.kind == "EQUIP" or verdict.kind == "TAKE") then
+        local p = combo.partner
+        local hand = function(slot) return slot == FSB.Stats.SLOT.OFFHAND and L.HAND_OFF or L.HAND_MAIN end
+        if p and p.from == "BAG" then
+            tooltip:AddLine(L.COMBO_WITH_BAG:format(hand(combo.partnerSlot), p.link), 0.6, 1, 0.6)
+        elseif p and p.from == "EQUIPPED" and p.slot ~= combo.partnerSlot then
+            tooltip:AddLine(L.COMBO_WITH_MOVE:format(hand(combo.partnerSlot), p.link), 0.6, 1, 0.6)
+        end
+        if combo.replaced and #combo.replaced > 0 then
+            tooltip:AddLine(L.COMBO_REPLACES:format(table.concat(combo.replaced, " + ")), 1, 1, 1)
+        end
+    end
     if verdict.kind == "BETTER_OTHER" then
         tooltip:AddLine(L.BETTER_FOR:format(table.concat(verdict.others, ", ")), 1, 1, 1)
     end

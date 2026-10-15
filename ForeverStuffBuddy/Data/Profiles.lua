@@ -1,47 +1,59 @@
 local _, FSB = ...
 
--- Profils : { name, role, weights = { [clé de stat] = poids } }.
--- Poids fixes et indicatifs (non modifiables) : valeurs de départ génériques qui ne prétendent pas
--- être optimales pour une classe donnée.
+-- Profils : un par classe × arbre de talents × mode (Data/Weights.lua).
+-- { name, class, tree, spec, mode, role, weights = { [clé de stat] = poids } }.
+-- Poids fixes et indicatifs (non modifiables).
 local Profiles = {}
 FSB.Profiles = Profiles
 
-local DEFAULTS = {
-    { name = "Soigneur", role = "HEALER", weights = {
-        ITEM_MOD_SPELL_HEALING_DONE_SHORT = 100, ITEM_MOD_SPELL_POWER_SHORT = 100, ITEM_MOD_SPELL_DAMAGE_DONE_SHORT = 10, ITEM_MOD_HOLY_DAMAGE_DONE_SHORT = 10,
-        ITEM_MOD_INTELLECT_SHORT = 75,
-        ITEM_MOD_MANA_REGENERATION_SHORT = 90, ITEM_MOD_SPIRIT_SHORT = 65, ITEM_MOD_CRIT_RATING_SHORT = 50,
-        ITEM_MOD_HASTE_RATING_SHORT = 55, ITEM_MOD_STAMINA_SHORT = 20 } },
-    { name = "Dégâts magiques", role = "DAMAGER", damage = "MAGIC", weights = {
-        ITEM_MOD_SPELL_DAMAGE_DONE_SHORT = 100, ITEM_MOD_SPELL_POWER_SHORT = 100, ITEM_MOD_INTELLECT_SHORT = 70, ITEM_MOD_HIT_RATING_SHORT = 85,
-        -- bonus d'école : valeur de départ générique (ne profite qu'aux sorts de cette école)
-        ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT = 50, ITEM_MOD_FIRE_DAMAGE_DONE_SHORT = 50, ITEM_MOD_FROST_DAMAGE_DONE_SHORT = 50,
-        ITEM_MOD_NATURE_DAMAGE_DONE_SHORT = 50, ITEM_MOD_ARCANE_DAMAGE_DONE_SHORT = 50, ITEM_MOD_HOLY_DAMAGE_DONE_SHORT = 50,
-        ITEM_MOD_CRIT_RATING_SHORT = 60, ITEM_MOD_HASTE_RATING_SHORT = 60, ITEM_MOD_STAMINA_SHORT = 15 } },
-    { name = "Dégâts physiques", role = "DAMAGER", damage = "PHYSICAL", weights = {
-        ITEM_MOD_ATTACK_POWER_SHORT = 50, ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 60, ITEM_MOD_STRENGTH_SHORT = 80, ITEM_MOD_AGILITY_SHORT = 80,
-        ITEM_MOD_HIT_RATING_SHORT = 85, ITEM_MOD_CRIT_RATING_SHORT = 70, ITEM_MOD_HASTE_RATING_SHORT = 60,
-        ITEM_MOD_EXPERTISE_RATING_SHORT = 60, ITEM_MOD_STAMINA_SHORT = 15 } },
-    { name = "Tank", role = "TANK", weights = {
-        ITEM_MOD_STAMINA_SHORT = 80, RESISTANCE0_NAME = 20, ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 15, ITEM_MOD_DEFENSE_SKILL_RATING_SHORT = 70,
-        ITEM_MOD_DODGE_RATING_SHORT = 65, ITEM_MOD_PARRY_RATING_SHORT = 65, ITEM_MOD_BLOCK_RATING_SHORT = 40,
-        ITEM_MOD_STRENGTH_SHORT = 40, ITEM_MOD_AGILITY_SHORT = 50, ITEM_MOD_EXPERTISE_RATING_SHORT = 40 } },
+-- Noms français des classes : servent d'identifiant interne des profils.
+local CLASS_FR = {
+    WARRIOR = "Guerrier", PALADIN = "Paladin", HUNTER = "Chasseur", ROGUE = "Voleur", PRIEST = "Prêtre",
+    SHAMAN = "Chaman", MAGE = "Mage", WARLOCK = "Démoniste", DRUID = "Druide",
 }
+local MODE_FR = { LEVELING = "Leveling 10–59", PVE = "PvE 60", PVP = "PvP",
+    LOW_LEVELING = "Leveling 1–9", LOW_DUNGEON = "Donjons bas niveau" }
+local ROLE_FR = { DAMAGER = "Dégâts", HEALER = "Soigneur", TANK = "Tank", ANY = "Sans spé" }
+local VARIANT_FR = { CAT = "félin", BEAR = "ours" }
 
--- Profils de lanceur d'une seule école : poids de « Dégâts magiques » avec l'école visée à 100 et les autres à 0.
-local MAGIC_WEIGHTS = DEFAULTS[2].weights
-local SCHOOL_PROFILES = {
-    { "Dégâts Ombre", "ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT" }, { "Dégâts Feu", "ITEM_MOD_FIRE_DAMAGE_DONE_SHORT" },
-    { "Dégâts Givre", "ITEM_MOD_FROST_DAMAGE_DONE_SHORT" }, { "Dégâts Nature", "ITEM_MOD_NATURE_DAMAGE_DONE_SHORT" },
-    { "Dégâts Arcanes", "ITEM_MOD_ARCANE_DAMAGE_DONE_SHORT" }, { "Dégâts Sacré", "ITEM_MOD_HOLY_DAMAGE_DONE_SHORT" },
-}
-for _, entry in ipairs(SCHOOL_PROFILES) do
+-- Colonnes du tableau -> poids par clé de stat (la plus forte valeur l'emporte pour une clé partagée).
+local function ToWeights(values)
     local weights = {}
-    for key, w in pairs(MAGIC_WEIGHTS) do
-        if not key:find("_DAMAGE_DONE_SHORT$") or key == "ITEM_MOD_SPELL_DAMAGE_DONE_SHORT" then weights[key] = w end
+    for i, keys in ipairs(FSB.Weights.COLUMNS) do
+        local v = values[i] or 0
+        if v > 0 then
+            for _, key in ipairs(keys) do
+                if not weights[key] or v > weights[key] then weights[key] = v end
+            end
+        end
     end
-    weights[entry[2]] = 100
-    DEFAULTS[#DEFAULTS + 1] = { name = entry[1], role = "DAMAGER", damage = "MAGIC", school = entry[2], weights = weights }
+    return weights
+end
+
+local DEFAULTS = {}
+for _, s in ipairs(FSB.Weights.SPECS) do
+    local class, tree, spec, role, byMode, variant = s[1], s[2], s[3], s[4], s[5], s.variant
+    local key = class .. ":" .. tree .. (variant and (":" .. variant) or "")
+    local specName = variant and ("%s (%s)"):format(spec, VARIANT_FR[variant]) or spec
+    for _, mode in ipairs(FSB.Weights.MODES) do
+        DEFAULTS[#DEFAULTS + 1] = {
+            name = ("%s · %s · %s"):format(CLASS_FR[class], specName, MODE_FR[mode]),
+            class = class, tree = tree, spec = spec, variant = variant, mode = mode, role = role,
+            roleInfo = FSB.Weights.ROLE_INFO[key], -- { rôle, type, portée }
+            weights = ToWeights(byMode[mode]),
+        }
+    end
+end
+-- Sous le niveau 10 (pas de spé) : un profil par classe, arbre 0, rôle ANY.
+for _, s in ipairs(FSB.Weights.LOW) do
+    local class, general, byMode = s[1], s[2], s[3]
+    for _, mode in ipairs(FSB.Weights.LOW_MODES) do
+        DEFAULTS[#DEFAULTS + 1] = {
+            name = ("%s · %s · %s"):format(CLASS_FR[class], general, MODE_FR[mode]),
+            class = class, tree = 0, spec = general, mode = mode, role = "ANY",
+            weights = ToWeights(byMode[mode]),
+        }
+    end
 end
 
 local function Copy(t)
@@ -58,14 +70,34 @@ function Profiles.Init(db)
     for _, p in ipairs(db.profiles or {}) do saved[p.name] = p.setBonusValue end
     db.profiles = Copy(DEFAULTS)
     for _, p in ipairs(db.profiles) do p.setBonusValue = saved[p.name] end
-    db.schema = 4
+    db.schema = 5
     if not Profiles.Find(db.activeProfile, db) then db.activeProfile = db.profiles[1].name end
 end
 
--- Nom affiché du profil dans la langue active (l'identifiant interne reste le nom français).
+-- Nom affiché dans la langue active : « Mage · Givre · PvE 60 ».
 function Profiles.DisplayName(name)
-    local names = FSB.L and FSB.L.PROFILES
-    return (names and names[name]) or name
+    local p = Profiles.Find(name)
+    local L = FSB.L
+    if not p or not L then return name end
+    local trees = L.TREE_NAMES and L.TREE_NAMES[p.class]
+    local class = (L.CLASS_NAMES and L.CLASS_NAMES[p.class]) or CLASS_FR[p.class]
+    local spec = (p.tree == 0 and L.LOW_ROLES and L.LOW_ROLES[p.class]) or (trees and trees[p.tree]) or p.spec
+    if p.variant then
+        spec = ("%s (%s)"):format(spec, (L.FERAL_FORMS and L.FERAL_FORMS[p.variant]) or VARIANT_FR[p.variant])
+    end
+    local mode = (L.MODES and L.MODES[p.mode]) or MODE_FR[p.mode]
+    return ("%s · %s · %s"):format(class, spec, mode)
+end
+
+-- Rôle affiché « DPS · Physique · CAC » (rôle, type, portée) ; rôle général sous le niveau 10.
+function Profiles.RoleLabel(p)
+    local L = FSB.L
+    if not p then return "?" end
+    if p.role == "ANY" then return (L.LOW_ROLES and L.LOW_ROLES[p.class]) or p.spec end
+    if not p.roleInfo then return (ROLE_FR[p.role] or p.role) end
+    local parts = {}
+    for i, word in ipairs(p.roleInfo) do parts[i] = (L.ROLE_PARTS and L.ROLE_PARTS[word]) or word end
+    return table.concat(parts, " · ")
 end
 
 -- Lignes de texte des poids : profil actif seul, ou tous les profils (diagnostic d'équilibrage).
@@ -96,11 +128,57 @@ function Profiles.Find(name, db)
     end
 end
 
+-- Profil d'une classe, d'un arbre et d'un mode. variant : "CAT" (défaut) ou "BEAR" pour le druide farouche.
+function Profiles.For(class, tree, mode, variant)
+    for _, p in ipairs(FSB.db.profiles) do
+        if p.class == class and p.tree == tree and p.mode == mode
+            and (not p.variant or p.variant == (variant or "CAT")) then return p end
+    end
+end
+
+-- Tous les profils d'une classe pour un mode (une entrée par arbre).
+function Profiles.ForClass(class, mode)
+    local list = {}
+    for _, p in ipairs(FSB.db.profiles) do
+        if p.class == class and p.mode == mode then list[#list + 1] = p end
+    end
+    return list
+end
+
+-- Rôles distincts que les arbres de la classe peuvent tenir dans ce mode.
+function Profiles.Roles(class, mode)
+    local seen, roles = {}, {}
+    for _, p in ipairs(Profiles.ForClass(class, mode)) do
+        if not seen[p.role] then seen[p.role] = true; roles[#roles + 1] = p.role end
+    end
+    return roles
+end
+
+-- Profil moyen des arbres d'une classe tenant un rôle (pour un autre joueur dont l'arbre n'est pas lisible).
+local roleCache = {}
+function Profiles.ClassRole(class, role, mode)
+    local key = tostring(class) .. ":" .. tostring(role) .. ":" .. tostring(mode)
+    if roleCache[key] then return roleCache[key] end
+    local sum, n = {}, 0
+    for _, p in ipairs(Profiles.ForClass(class, mode)) do
+        if p.role == role then
+            n = n + 1
+            for k, w in pairs(p.weights) do sum[k] = (sum[k] or 0) + w end
+        end
+    end
+    if n == 0 then return nil end
+    for k, w in pairs(sum) do sum[k] = w / n end
+    local profile = { name = ("%s · %s · %s"):format(CLASS_FR[class] or class, ROLE_FR[role] or role, MODE_FR[mode] or mode),
+        class = class, role = role, mode = mode, weights = sum }
+    roleCache[key] = profile
+    return profile
+end
+
 function Profiles.GetActive() return Profiles.Find(FSB.db.activeProfile) end
 
 local function Changed() if FSB.Analyzer then FSB.Analyzer.InvalidateAll() end end
 
--- Le profil actif est toujours choisi par la détection de spé (et le choix de rôle), jamais à la main.
+-- Le profil actif est toujours choisi par la détection de spé (talents) et du mode, jamais à la main.
 function Profiles.SetActive(name)
     if not Profiles.Find(name) then return false end
     FSB.db.activeProfile = name

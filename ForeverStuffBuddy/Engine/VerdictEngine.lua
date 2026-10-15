@@ -26,10 +26,17 @@ function Verdict.IsUpgrade(delta, replacedScore)
     return delta >= Threshold("upgradeAbs") and delta >= Threshold("upgradeRel") * math.max(replacedScore or 0, 0)
 end
 
--- Gain d'un profil pour l'objet. Retourne { upgrade = bool, fraction = gain/valeur de l'objet, slot = n }.
-local function Gain(ctx, equipped, profile, canDualWield, adjust)
-    local delta, slot, replaced = FSB.Optimizer.Evaluate(
-        ctx.equipLoc, ctx.stats, equipped, profile.weights, canDualWield, adjust)
+-- Gain d'un profil pour l'objet. Retourne { upgrade = bool, fraction = gain/valeur de l'objet, slot = n, combo }.
+-- pool (armes du sac + armes portées) : seulement pour moi, jamais pour les autres membres.
+local function Gain(ctx, equipped, profile, canDualWield, adjust, pool)
+    local delta, slot, replaced, combo
+    if pool then
+        delta, slot, replaced, combo = FSB.Optimizer.EvaluateWeapons(
+            ctx.equipLoc, ctx.stats, equipped, pool, profile.weights, canDualWield, adjust)
+    else
+        delta, slot, replaced = FSB.Optimizer.Evaluate(
+            ctx.equipLoc, ctx.stats, equipped, profile.weights, canDualWield, adjust)
+    end
     local newScore = FSB.ScoreEngine.Score(ctx.stats, profile.weights)
     -- Cas limite : le gain est proche du seuil d'upgrade (entre 50 % et 150 % du minimum requis).
     local close = false
@@ -42,6 +49,7 @@ local function Gain(ctx, equipped, profile, canDualWield, adjust)
         upgrade = Verdict.IsUpgrade(delta, replaced),
         fraction = (delta and newScore > 0) and delta / newScore or 0,
         slot = slot,
+        combo = combo,
     }
 end
 
@@ -49,12 +57,14 @@ end
 -- Retourne { kind = "EQUIP" | "OFFSPEC" | "SELL", profile = nom (OFFSPEC), slot, fraction }.
 function Verdict.Solo(ctx)
     local function adjust(profile) return ctx.adjustFor and ctx.adjustFor(profile) or nil end
-    local mine = Gain(ctx, ctx.equipped, ctx.active, ctx.canDualWield, adjust(ctx.active))
-    if mine.upgrade then return { kind = "EQUIP", slot = mine.slot, fraction = mine.fraction, close = mine.close } end
+    local mine = Gain(ctx, ctx.equipped, ctx.active, ctx.canDualWield, adjust(ctx.active), ctx.weaponPool)
+    if mine.upgrade then
+        return { kind = "EQUIP", slot = mine.slot, fraction = mine.fraction, close = mine.close, combo = mine.combo }
+    end
 
     for _, profile in ipairs(ctx.profiles) do
         if profile ~= ctx.active then
-            local g = Gain(ctx, ctx.equipped, profile, ctx.canDualWield, adjust(profile))
+            local g = Gain(ctx, ctx.equipped, profile, ctx.canDualWield, adjust(profile), ctx.weaponPool)
             if g.upgrade then return { kind = "OFFSPEC", profile = profile.name } end
         end
     end
@@ -97,5 +107,5 @@ function Verdict.Group(ctx)
         end
     end
     if #better > 0 then return { kind = "BETTER_OTHER", others = better, served = served, slot = solo.slot } end
-    return { kind = "TAKE", slot = solo.slot }
+    return { kind = "TAKE", slot = solo.slot, combo = solo.combo }
 end

@@ -15,6 +15,7 @@ Stats.KEYS = {
     { key = "ITEM_MOD_INTELLECT_SHORT",         alias = "int",      label = "Intelligence" },
     { key = "ITEM_MOD_SPIRIT_SHORT",            alias = "esprit",   label = "Esprit" },
     { key = "ITEM_MOD_ATTACK_POWER_SHORT",      alias = "pa",       label = "Puissance d'attaque" },
+    { key = "ITEM_MOD_RANGED_ATTACK_POWER_SHORT", alias = "pad",    label = "PA à distance" },
     { key = "ITEM_MOD_SPELL_POWER_SHORT",              alias = "ps",       label = "Puissance des sorts" },
     { key = "ITEM_MOD_SPELL_DAMAGE_DONE_SHORT",       alias = "degats",   label = "Puissance des dégâts" },
     { key = "ITEM_MOD_SHADOW_DAMAGE_DONE_SHORT", alias = "ombre",   label = "Dégâts Ombre" },
@@ -25,27 +26,39 @@ Stats.KEYS = {
     { key = "ITEM_MOD_HOLY_DAMAGE_DONE_SHORT",   alias = "sacre",   label = "Dégâts Sacré" },
     { key = "ITEM_MOD_SPELL_HEALING_DONE_SHORT",     alias = "soins",    label = "Puissance des soins" },
     { key = "ITEM_MOD_MANA_REGENERATION_SHORT", alias = "mp5",      label = "MP5" },
+    { key = "ITEM_MOD_HEALTH_REGEN_SHORT",      alias = "hp5",      label = "Vie par 5 s" },
+    { key = "ITEM_MOD_SPELL_PENETRATION_SHORT", alias = "penetration", label = "Pénétration des sorts" },
     { key = "ITEM_MOD_CRIT_RATING_SHORT",       alias = "crit",     label = "Critique" },
+    { key = "ITEM_MOD_CRIT_MELEE_RATING_SHORT", alias = "critmelee", label = "Critique mêlée" },
+    { key = "ITEM_MOD_CRIT_RANGED_RATING_SHORT", alias = "critdist", label = "Critique distance" },
+    { key = "ITEM_MOD_CRIT_SPELL_RATING_SHORT", alias = "critsort", label = "Critique des sorts" },
     { key = "ITEM_MOD_HIT_RATING_SHORT",        alias = "toucher",  label = "Toucher" },
+    { key = "ITEM_MOD_HIT_MELEE_RATING_SHORT",  alias = "touchermelee", label = "Toucher mêlée" },
+    { key = "ITEM_MOD_HIT_RANGED_RATING_SHORT", alias = "toucherdist", label = "Toucher distance" },
+    { key = "ITEM_MOD_HIT_SPELL_RATING_SHORT",  alias = "touchersort", label = "Toucher des sorts" },
     { key = "ITEM_MOD_HASTE_RATING_SHORT",      alias = "hate",     label = "Hâte" },
+    { key = "ITEM_MOD_HASTE_MELEE_RATING_SHORT", alias = "hatemelee", label = "Hâte mêlée" },
+    { key = "ITEM_MOD_HASTE_RANGED_RATING_SHORT", alias = "hatedist", label = "Hâte distance" },
+    { key = "ITEM_MOD_HASTE_SPELL_RATING_SHORT", alias = "hatesort", label = "Hâte des sorts" },
     { key = "ITEM_MOD_EXPERTISE_RATING_SHORT",  alias = "expertise",label = "Expertise" },
     { key = "ITEM_MOD_MASTERY_RATING_SHORT",    alias = "maitrise", label = "Maîtrise" },
     { key = "ITEM_MOD_DEFENSE_SKILL_RATING_SHORT", alias = "defense", label = "Défense" },
     { key = "ITEM_MOD_DODGE_RATING_SHORT",      alias = "esquive",  label = "Esquive" },
     { key = "ITEM_MOD_PARRY_RATING_SHORT",      alias = "parade",   label = "Parade" },
     { key = "ITEM_MOD_BLOCK_RATING_SHORT",      alias = "blocage",  label = "Blocage" },
+    { key = "ITEM_MOD_BLOCK_VALUE_SHORT",       alias = "valeurblocage", label = "Valeur de blocage" },
+    { key = "ITEM_MOD_EXTRA_ARMOR_SHORT",       alias = "armurebonus", label = "Armure bonus" },
     { key = "ITEM_MOD_RESILIENCE_RATING_SHORT", alias = "resil",    label = "Résilience" },
 }
 
 -- Clés vues en jeu, volontairement hors score pour l'instant (pas de poids, pas dans l'interface) :
--- résistances, régénération de vie. Elles ne sont pas signalées comme inconnues.
+-- résistances. Elles ne sont pas signalées comme inconnues.
 Stats.IGNORED = {
     ITEM_MOD_SHADOW_RESISTANCE_SHORT = true, ITEM_MOD_FIRE_RESISTANCE_SHORT = true,
     ITEM_MOD_NATURE_RESISTANCE_SHORT = true, ITEM_MOD_FROST_RESISTANCE_SHORT = true,
     ITEM_MOD_ARCANE_RESISTANCE_SHORT = true, ITEM_MOD_HOLY_RESISTANCE_SHORT = true,
     RESISTANCE1_NAME = true, RESISTANCE2_NAME = true, RESISTANCE3_NAME = true,
     RESISTANCE4_NAME = true, RESISTANCE5_NAME = true, RESISTANCE6_NAME = true,
-    ITEM_MOD_HEALTH_REGEN_SHORT = true,
     ITEM_MOD_MINING_SHORT = true, -- bonus de métier (vu sur une cape de mineur)
 }
 

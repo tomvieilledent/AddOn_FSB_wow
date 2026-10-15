@@ -57,15 +57,16 @@ local function ExplicitRole(unit)
     if ok and (role == "HEALER" or role == "TANK") then return role end
 end
 
-local EXPLICIT_PROFILE = { HEALER = "Soigneur", TANK = "Tank" }
-
+-- Profil comparé d'un membre : moyenne des arbres de sa classe tenant son rôle, dans le mode calculé pour SON
+-- niveau. Rôle : unique pour la classe, ou HEALER/TANK explicite du groupe.
 local function MemberProfile(m)
-    local roles = FSB.SpecEngine.Choices(nil, m.classFile, nil, FSB.Classes.ROLES, FSB.Profiles.List())
-    if #roles == 1 then return roles[1] end
-    local wanted = m.groupRole and EXPLICIT_PROFILE[m.groupRole]
-    for _, p in ipairs(roles) do
-        if p.name == wanted then return p end
+    local mode = FSB.Context.Mode(m.level)
+    local roles = FSB.Profiles.Roles(m.classFile, mode)
+    local role = #roles == 1 and roles[1] or nil
+    if not role and m.groupRole then
+        for _, r in ipairs(roles) do if r == m.groupRole then role = r end end
     end
+    return role and FSB.Profiles.ClassRole(m.classFile, role, mode) or nil
 end
 
 local function SyncRoster()
@@ -129,7 +130,7 @@ local function StoreMember(guid, unit)
     local equipped, complete = ReadEquipment(unit)
     members[guid] = {
         name = UnitName(unit), classID = select(3, UnitClass(unit)), classFile = select(2, UnitClass(unit)),
-        specID = ReadSpec(unit), equipped = equipped, groupRole = ExplicitRole(unit),
+        specID = ReadSpec(unit), equipped = equipped, groupRole = ExplicitRole(unit), level = UnitLevel(unit),
         complete = complete or attempts >= MAX_ATTEMPTS, attempts = attempts,
     }
     if not MemberProfile(members[guid]) then
@@ -224,6 +225,7 @@ function Inspector.GetComparableMembers()
         local profile = MemberProfile(m)
         if profile then
             list[#list + 1] = { name = m.name, weights = profile.weights, equipped = m.equipped,
+                classFile = m.classFile, level = m.level,
                 loot = FSB.LootTracker and FSB.LootTracker.Count(m.name) or 0 }
         end
     end

@@ -69,6 +69,27 @@ local function BuildSetAdjust(equipped, equipLoc, newSetID, setState)
     end
 end
 
+-- Armes disponibles pour compléter une combinaison : armes du sac + armes portées en main droite/gauche,
+-- moins un exemplaire de l'objet analysé (s'il est lui-même dans le sac ou porté).
+local function WeaponPool(equipped, link)
+    -- Arme déjà portée : comparaison simple (pas de « à équiper » sur ce qu'on porte déjà).
+    for _, slot in ipairs({ FSB.Stats.SLOT.MAINHAND, FSB.Stats.SLOT.OFFHAND }) do
+        if equipped[slot] and equipped[slot].link == link then return nil end
+    end
+    local pool = FSB.Compat.GetBagWeapons and FSB.Compat.GetBagWeapons() or {}
+    for _, slot in ipairs({ FSB.Stats.SLOT.MAINHAND, FSB.Stats.SLOT.OFFHAND }) do
+        local item = equipped[slot]
+        if item and not item.unreadable then
+            pool[#pool + 1] = { link = item.link, stats = item.stats, equipLoc = FSB.Compat.GetEquipLoc(item.link),
+                from = "EQUIPPED", slot = slot }
+        end
+    end
+    for i, item in ipairs(pool) do
+        if item.link == link then table.remove(pool, i); break end
+    end
+    return pool
+end
+
 local function SetSensitive(equipped, equipLoc, newSetID)
     if newSetID then return true end
     for _, slot in ipairs(FSB.Stats.RelatedSlots(equipLoc)) do
@@ -89,7 +110,7 @@ function Analyzer.Analyze(link, equipLoc)
     local unknownCount, unknownNames = RecordUnknownStats(stats)
     if unknownCount > 0 then LogAdd("STATS_INCONNUES", { link = link, detail = unknownNames }) end
 
-    local usability = FSB.Compat.GetUsability(link)
+    local usability = FSB.Compat.GetPlayerUsability(link)
     if not usability then LogAdd("UTILISABILITE_ILLISIBLE", { link = link, global = true }) end
     if usability and usability.unusable then
         -- Inutilisable par le personnage : rien à comparer.
@@ -114,11 +135,20 @@ function Analyzer.Analyze(link, equipLoc)
         canDualWield = FSB.Compat.CanDualWield(),
         profiles = FSB.Spec and FSB.Spec.OffspecProfiles() or FSB.Profiles.List(), active = FSB.Profiles.GetActive(),
         adjustFor = BuildSetAdjust(equipped, equipLoc, newSetID, setState),
+        weaponPool = FSB.Compat.WEAPON_LOCS and FSB.Compat.WEAPON_LOCS[equipLoc] and WeaponPool(equipped, link) or nil,
     }
 
     local result
     if mode == "GROUP" then
-        ctx.members = FSB.Inspector.GetComparableMembers()
+        -- Membres qui ne peuvent pas porter l'objet (table Classic des classes) : écartés de la comparaison.
+        local classID, subClassID = FSB.Compat.ItemClass(link)
+        local members = {}
+        for _, m in ipairs(FSB.Inspector.GetComparableMembers()) do
+            if FSB.Equipment.CanUse(m.classFile, m.level, classID, subClassID, equipLoc) ~= false then
+                members[#members + 1] = m
+            end
+        end
+        ctx.members = members
         ctx.myLoot = FSB.LootTracker and UnitName and FSB.LootTracker.Count(UnitName("player")) or 0
         result = FSB.Verdict.Group(ctx)
         result.unscanned = FSB.Inspector.CountPending()
@@ -129,6 +159,7 @@ function Analyzer.Analyze(link, equipLoc)
         result.reqLevel = usability.reqLevel
     end
     if unknownCount > 0 then result.unknownStats = unknownCount end
+    if usability and usability.needsSkill then result.needsSkill = usability.needsSkill end
     result.setNote = result.slot and setState.changeFor(result.slot) or nil
     if result.setNote and result.setNote.partial then LogAdd("SET_PARTIEL", { link = link, verdict = result.kind }) end
     if result.close then LogAdd("VERDICT_LIMITE", { link = link, verdict = result.kind }) end
@@ -141,6 +172,13 @@ end
 
 function Analyzer.InvalidateAll()
     cache = { SOLO = {}, GROUP = {} }
+end
+
+-- Contenu des sacs changé : seuls les verdicts d'armes (combinaisons avec le sac) sont à refaire.
+function Analyzer.InvalidateWeapons()
+    for _, byLoc in pairs(cache) do
+        for equipLoc in pairs(FSB.Compat.WEAPON_LOCS) do byLoc[equipLoc] = nil end
+    end
 end
 
 function Analyzer.InvalidateGroup()

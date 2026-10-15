@@ -1,16 +1,13 @@
 local _, FSB = ...
 
--- Interface /fsb : fenêtre sobre (fond anthracite, filets bronze, accent or mat) avec quatre pages : Accueil, Stats
--- (temporaire), Commandes, Réglages. Construite à la première ouverture. Aucun modèle de bouton Blizzard : tout est
+-- Interface /fsb : fenêtre sobre (fond anthracite, filets bronze, accent or mat) avec quatre pages : Accueil,
+-- Détection (ce que FSB a détecté + poids du profil actif), Commandes, Réglages. Construite à la première ouverture. Aucun modèle de bouton Blizzard : tout est
 -- dessiné avec des textures unies, pour un rendu homogène. Toute erreur de construction est interceptée : l'interface
 -- ne doit jamais casser l'analyse.
 local UI = {}
 FSB.UI = UI
 
--- Page « Stats » temporaire : passer à false une fois les poids équilibrés.
-UI.SHOW_STATS_TAB = true
-
-local WIDTH, HEIGHT = 560, 520
+local WIDTH, HEIGHT = 560, 580
 local WHITE = "Interface\\Buttons\\WHITE8X8"
 local LOGO = "Interface\\AddOns\\ForeverStuffBuddy\\Media\\logo"
 
@@ -215,32 +212,90 @@ local function BuildHome(page)
     VerdictCard(page, 0, -204, w, C.amber, "HOME_V3", "HOME_V3_DESC")
     VerdictCard(page, w + 12, -204, w, C.red, "HOME_V4", "HOME_V4_DESC")
 
-    Text(page, "HOME_NOTE", 0, -284, "GameFontHighlightSmall", C.dim, PAGE_W)
-    Divider(page, 0, -340, PAGE_W)
-    Text(page, "HOME_CREDITS", 0, -352, "GameFontNormalSmall", C.gold, 300)
+    -- Style de jeu : PvE ou PvP (aussi /fsbpve et /fsbpvp).
+    Text(page, "HOME_PLAYSTYLE", 0, -290, "GameFontNormal", C.gold, 190)
+    page.pve = FlatButton(page, "PvE", 110, 26, function() FSB.SetPlaystyle("PVE") end)
+    page.pve:SetPoint("TOPLEFT", 196, -284)
+    page.pvp = FlatButton(page, "PvP", 110, 26, function() FSB.SetPlaystyle("PVP") end)
+    page.pvp:SetPoint("TOPLEFT", 314, -284)
+    Text(page, "HOME_PLAYSTYLE_HINT", 0, -318, "GameFontHighlightSmall", C.dim, PAGE_W)
+
+    Text(page, "HOME_NOTE", 0, -344, "GameFontHighlightSmall", C.dim, PAGE_W)
+    Divider(page, 0, -398, PAGE_W)
+    Text(page, "HOME_CREDITS", 0, -410, "GameFontNormalSmall", C.gold, 300)
 end
 
--- Poids indicatifs (lecture seule) du profil actif : deux colonnes, lignes alternées.
-local function BuildStats(page)
-    page.title = Text(page, "", 0, 0, "GameFontNormal", C.gold, PAGE_W)
-    Text(page, "UI_STATS_NOTE", 0, -20, "GameFontHighlightSmall", C.dim, PAGE_W)
-    local colW, rowH = (PAGE_W - 16) / 2, 21
-    for i, s in ipairs(FSB.Stats.KEYS) do
-        local col, row = (i - 1) % 2, math.floor((i - 1) / 2)
-        local x, y = col * (colW + 16), -46 - row * rowH
-        local line = CreateFrame("Frame", nil, page)
-        line:SetSize(colW, rowH); line:SetPoint("TOPLEFT", x, y)
-        if row % 2 == 0 then Background(line, C.stripe) end
-        local name = Text(line, FSB.Stats.Label(s.key), 8, -4, "GameFontHighlightSmall", C.text, colW - 60)
-        if name.SetWordWrap then name:SetWordWrap(false) end
-        local value = Text(line, "", colW - 52, -4, "GameFontNormalSmall", C.gold, 44, "RIGHT")
-        statRows[#statRows + 1] = { key = s.key, name = name, value = value }
+-- Détection : classe, spé, rôle, niveau, mode, lieu, profil, puis les poids du profil actif (non nuls, du plus
+-- fort au plus faible). Sert à vérifier que FSB a bien compris le personnage.
+local DETECT_FIELDS = { "class", "spec", "role", "level", "mode", "place", "profile" }
+local function BuildDetect(page)
+    local lineH = 18
+    local card = CreateFrame("Frame", nil, page)
+    card:SetSize(PAGE_W, #DETECT_FIELDS * lineH + 14); card:SetPoint("TOPLEFT", 0, 0)
+    Background(card, C.card)
+    local bar = Rect(card, C.gold, "ARTWORK")
+    bar:SetPoint("TOPLEFT"); bar:SetPoint("BOTTOMLEFT"); bar:SetWidth(3)
+    page.fields = {}
+    for i, field in ipairs(DETECT_FIELDS) do
+        local y = -8 - (i - 1) * lineH
+        Text(card, "DET_" .. field:upper(), 14, y, "GameFontNormalSmall", C.gold, 110)
+        local value = Text(card, "", 128, y, "GameFontHighlightSmall", C.text, PAGE_W - 138)
+        if value.SetWordWrap then value:SetWordWrap(false) end
+        page.fields[field] = value
     end
-    local bottom = -46 - math.ceil(#FSB.Stats.KEYS / 2) * rowH - 12
-    local all = FlatButton(page, "UI_ALL_PROFILES", 220, 26, function()
+    -- Druide farouche uniquement : choix ours / félin, sur la ligne du rôle.
+    page.bear = FlatButton(card, "FERAL_BEAR", 80, 18, function() FSB.SetFeralForm("BEAR") end, { font = "GameFontHighlightSmall" })
+    page.bear:SetPoint("TOPRIGHT", -96, -6 - 2 * lineH)
+    page.cat = FlatButton(card, "FERAL_CAT", 80, 18, function() FSB.SetFeralForm("CAT") end, { font = "GameFontHighlightSmall" })
+    page.cat:SetPoint("TOPRIGHT", -10, -6 - 2 * lineH)
+
+    local top = -(#DETECT_FIELDS * lineH + 14) - 12
+    Text(page, "DET_STATS", 0, top - 4, "GameFontNormal", C.gold, 300)
+    local all = FlatButton(page, "UI_ALL_PROFILES", 200, 22, function()
         FSB.Utils.Report(FSB.Profiles.WeightLines(true))
     end)
-    all:SetPoint("TOPLEFT", 0, bottom)
+    all:SetPoint("TOPRIGHT", 0, top)
+
+    local cols, gap, rowH = 3, 10, 18
+    local colW = (PAGE_W - gap * (cols - 1)) / cols
+    for i = 1, #FSB.Stats.KEYS do
+        local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
+        local line = CreateFrame("Frame", nil, page)
+        line:SetSize(colW, rowH); line:SetPoint("TOPLEFT", col * (colW + gap), top - 30 - row * rowH)
+        if row % 2 == 0 then Background(line, C.stripe) end
+        local name = Text(line, "", 6, -3, "GameFontHighlightSmall", C.text, colW - 44)
+        if name.SetWordWrap then name:SetWordWrap(false) end
+        local value = Text(line, "", colW - 38, -3, "GameFontNormalSmall", C.gold, 32, "RIGHT")
+        statRows[i] = { line = line, name = name, value = value }
+    end
+end
+
+local function RefreshDetect(page)
+    local d = FSB.Spec.Describe()
+    for _, field in ipairs(DETECT_FIELDS) do page.fields[field]:SetText(d[field] or "?") end
+    if FSB.Spec.IsFeral() then
+        local bear = FSB.db.feralForm == "BEAR"
+        page.bear:SetActive(bear); page.cat:SetActive(not bear)
+        page.bear:Show(); page.cat:Show()
+    else
+        page.bear:Hide(); page.cat:Hide()
+    end
+    local active = FSB.Profiles.GetActive()
+    local list = {}
+    for _, s in ipairs(FSB.Stats.KEYS) do
+        local w = active and active.weights[s.key]
+        if w and w > 0 then list[#list + 1] = { key = s.key, w = w } end
+    end
+    table.sort(list, function(a, b) if a.w ~= b.w then return a.w > b.w end return a.key < b.key end)
+    for i, row in ipairs(statRows) do
+        local entry = list[i]
+        if entry then
+            row.name:SetText(FSB.Stats.Label(entry.key)); row.value:SetText(tostring(entry.w))
+            row.line:Show()
+        else
+            row.line:Hide()
+        end
+    end
 end
 
 -- Liste des commandes : commande en or, description en gris.
@@ -264,9 +319,7 @@ local function BuildSettings(page)
     Background(card, C.card)
     local bar = Rect(card, C.gold, "ARTWORK")
     bar:SetPoint("TOPLEFT"); bar:SetPoint("BOTTOMLEFT"); bar:SetWidth(3)
-    page.status = Text(card, "", 16, -19, "GameFontHighlight", C.text, PAGE_W - 170)
-    local role = FlatButton(card, "UI_PICK_ROLE", 130, 28, function() UI.ShowRolePicker(true) end)
-    role:SetPoint("TOPRIGHT", -12, -13)
+    page.status = Text(card, "", 16, -19, "GameFontHighlight", C.text, PAGE_W - 32)
 
     Section(page, "UI_SECTION_DISPLAY", -100, PAGE_W)
     page.enabled = Checkbox(page, "UI_ENABLED", 0, -132,
@@ -303,14 +356,11 @@ function UI.Refresh()
         s.langFR:SetActive(FSB.language == "frFR"); s.langEN:SetActive(FSB.language == "enUS")
     end
     frame.version:SetText("v" .. FSB.Utils.AddonVersion(FSB.name or "ForeverStuffBuddy"))
-    if pages.stats then
-        local active = FSB.Profiles.GetActive()
-        pages.stats.title:SetText(FSB.L.POIDS_TITLE:format(FSB.Profiles.DisplayName(active.name)))
-        for _, row in ipairs(statRows) do
-            row.name:SetText(FSB.Stats.Label(row.key))
-            row.value:SetText(active.weights[row.key] and tostring(active.weights[row.key]) or "-")
-        end
+    if pages.home then
+        local pvp = FSB.Context.Playstyle() == "PVP"
+        pages.home.pve:SetActive(not pvp); pages.home.pvp:SetActive(pvp)
     end
+    if pages.detect then RefreshDetect(pages.detect) end
     if pages.commands then
         local i = 0
         for _, line in ipairs(FSB.L.HELP) do
@@ -364,23 +414,21 @@ local function Build()
     -- Onglets : texte seul, soulignement or sur la page active.
     local defs = {
         { key = "UI_TAB_HOME", build = BuildHome, name = "home" },
-        { key = "UI_TAB_STATS", build = BuildStats, name = "stats", temporary = true },
+        { key = "UI_TAB_DETECT", build = BuildDetect, name = "detect" },
         { key = "UI_TAB_DEV", build = BuildCommands, name = "commands" },
         { key = "UI_TAB_GENERAL", build = BuildSettings, name = "settings" },
     }
     local x = 16
     for _, def in ipairs(defs) do
-        if not def.temporary or UI.SHOW_STATS_TAB then
-            local index = #tabs + 1
-            local page = CreateFrame("Frame", nil, frame)
-            page:SetPoint("TOPLEFT", 20, -124); page:SetPoint("BOTTOMRIGHT", -20, 16)
-            def.build(page)
-            pages[def.name] = page
-            local button = FlatButton(frame, def.key, 104, 30, function() ShowPage(index) end, { flat = true })
-            button:SetPoint("TOPLEFT", x, -76)
-            tabs[index] = { page = page, button = button }
-            x = x + 108
-        end
+        local index = #tabs + 1
+        local page = CreateFrame("Frame", nil, frame)
+        page:SetPoint("TOPLEFT", 20, -124); page:SetPoint("BOTTOMRIGHT", -20, 16)
+        def.build(page)
+        pages[def.name] = page
+        local button = FlatButton(frame, def.key, 104, 30, function() ShowPage(index) end, { flat = true })
+        button:SetPoint("TOPLEFT", x, -76)
+        tabs[index] = { page = page, button = button }
+        x = x + 108
     end
     Divider(frame, 1, -106, WIDTH - 2)
     ShowPage(1)
@@ -396,52 +444,36 @@ function UI.Toggle()
 end
 
 ---------------------------------------------------------------------------------------------
--- Question de rôle : proposée seulement quand la spé détectée a plusieurs rôles possibles.
+-- Fenêtre de texte à copier (journal, diagnostics, aide).
 ---------------------------------------------------------------------------------------------
 
-local roleFrame
-function UI.ShowRolePicker()
+---------------------------------------------------------------------------------------------
+-- Druide farouche : question ours / félin (posée une seule fois, modifiable dans l'onglet Détection).
+---------------------------------------------------------------------------------------------
+
+local feralFrame
+function UI.ShowFeralPicker()
     local ok, err = pcall(function()
-        local specID = FSB.Spec.Current()
-        if not specID then return end
-        local choices = FSB.Spec.Choices(specID)
-        if #choices < 2 then return end
-        local info = FSB.Spec.Info(specID)
-        if not roleFrame then
-            roleFrame = NewPanel("FSBRoleFrame", 330, 200)
-            roleFrame:ClearAllPoints(); roleFrame:SetPoint("CENTER", 0, 140)
-            roleFrame.title = Text(roleFrame, "", 20, -18, "GameFontNormalLarge", C.gold, 290)
-            roleFrame.note = Text(roleFrame, "ROLE_PICK_NOTE", 20, -46, "GameFontHighlightSmall", C.dim, 290)
-            CloseButton(roleFrame)
-            roleFrame.buttons = {}
-        end
-        roleFrame:SetHeight(100 + #choices * 40)
-        roleFrame.title:SetText(FSB.L.ROLE_PICK_TITLE:format((info and info.name) or "?"))
-        for _, b in ipairs(roleFrame.buttons) do b:Hide() end
-        for i, p in ipairs(choices) do
-            local b = roleFrame.buttons[i]
-            if not b then
-                b = FlatButton(roleFrame, "", 290, 32, nil)
-                roleFrame.buttons[i] = b
-            end
-            b:SetPoint("TOPLEFT", 20, -80 - (i - 1) * 40)
-            b.label:SetText(FSB.Profiles.DisplayName(p.name))
-            b:SetScript("OnClick", function()
-                FSB.Spec.Choose(p.name)
-                roleFrame:Hide()
-                UI.Refresh()
+        if not FSB.Spec.IsFeral() then return end
+        if not feralFrame then
+            feralFrame = NewPanel("FSBFeralFrame", 330, 170)
+            feralFrame:ClearAllPoints(); feralFrame:SetPoint("CENTER", 0, 140)
+            Text(feralFrame, "FERAL_TITLE", 20, -18, "GameFontNormalLarge", C.gold, 290)
+            Text(feralFrame, "FERAL_NOTE", 20, -46, "GameFontHighlightSmall", C.dim, 290)
+            CloseButton(feralFrame)
+            local bear = FlatButton(feralFrame, "FERAL_BEAR_FULL", 140, 32, function()
+                FSB.SetFeralForm("BEAR"); feralFrame:Hide()
             end)
-            b:SetActive(FSB.db.activeProfile == p.name)
-            b:Show()
+            bear:SetPoint("TOPLEFT", 20, -110)
+            local cat = FlatButton(feralFrame, "FERAL_CAT_FULL", 140, 32, function()
+                FSB.SetFeralForm("CAT"); feralFrame:Hide()
+            end)
+            cat:SetPoint("TOPLEFT", 170, -110)
         end
-        roleFrame:Show()
+        feralFrame:Show()
     end)
     if not ok then FSB.Utils.Print("UI : " .. tostring(err)) end
 end
-
----------------------------------------------------------------------------------------------
--- Fenêtre de texte à copier (journal, diagnostics, aide).
----------------------------------------------------------------------------------------------
 
 local logFrame
 function UI.ShowText(text)
